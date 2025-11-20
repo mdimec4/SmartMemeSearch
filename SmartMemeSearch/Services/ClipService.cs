@@ -1,7 +1,5 @@
-﻿
-// --------------------------------------------------------
-// Services/ClipService.cs
-// REAL CLIP ONNX IMPLEMENTATION SETUP (OpenAI ViT-B/32)
+﻿// --------------------------------------------------------
+// Services/ClipService.cs — Improved for Xenova CLIP ONNX
 // --------------------------------------------------------
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -23,6 +21,17 @@ namespace SmartMemeSearch.Services
         private readonly InferenceSession _txt;
         private readonly JsonClipTokenizer _tokenizer;
 
+        // Strong prompt templates (OpenAI used 80, but these already help a LOT)
+        /*private static readonly string[] Templates = new[]
+        {
+            "a photo of a {}",
+            "a close-up photo of a {}",
+            "a cropped photo of a {}",
+            "a jpeg photo of a {}",
+            "a good photo of a {}",
+            "a low-resolution photo of a {}"
+        };*/
+
         public ClipService()
         {
             string baseDir = AppContext.BaseDirectory;
@@ -31,125 +40,97 @@ namespace SmartMemeSearch.Services
             string textModelPath = Path.Combine(baseDir, "Assets", "clip_text.onnx");
             string tokenizerPath = Path.Combine(baseDir, "Assets", "tokenizer.json");
 
-
             _img = new InferenceSession(imageModelPath);
             _txt = new InferenceSession(textModelPath);
-
             _tokenizer = new JsonClipTokenizer(tokenizerPath);
 
-            Task.Run(async () =>
-            {
-                /*var ids = _tokenizer.EncodeToIds("cat");
-                System.Diagnostics.Debug.WriteLine("Tokens for 'cat':");
-                System.Diagnostics.Debug.WriteLine(string.Join(", ", ids.Take(10)));*/
+            Debug.WriteLine("Loaded Xenova CLIP ONNX models");
 
-                await TestCatImageSimilarityAsync();
+            Debug.WriteLine("=== TEXT MODEL INPUTS ===");
+            foreach (var inp in _txt.InputMetadata)
+                Debug.WriteLine($"Name={inp.Key}, Type={inp.Value.ElementType}, Shape={string.Join(",", inp.Value.Dimensions)}");
 
-                /* foreach (var kvp in _img.InputMetadata)
-                 {
-                     System.Diagnostics.Debug.WriteLine(
-                         $"IMG Input: {kvp.Key}, Type={kvp.Value.ElementType}, Shape={string.Join(",", kvp.Value.Dimensions)}");
-                 }
-                 foreach (var kvp in _img.OutputMetadata)
-                 {
-                     System.Diagnostics.Debug.WriteLine(
-                         $"IMG Output: {kvp.Key}, Type={kvp.Value.ElementType}, Shape={string.Join(",", kvp.Value.Dimensions)}");
-                 }*/
+            Debug.WriteLine("=== IMAGE MODEL INPUTS ===");
+            foreach (var inp in _img.InputMetadata)
+                Debug.WriteLine($"Name={inp.Key}, Type={inp.Value.ElementType}, Shape={string.Join(",", inp.Value.Dimensions)}");
 
-                /*foreach (var meta in _img.ModelMetadata.CustomMetadataMap)
-                {
-                    System.Diagnostics.Debug.WriteLine($"{meta.Key}: {meta.Value}");
-                }*/
-                /* foreach (var inp in _img.InputMetadata)
-                 {
-                     var meta = inp.Value;
-                     System.Diagnostics.Debug.WriteLine(
-                         $"Input '{inp.Key}': Type={meta.ElementType}, Dims={string.Join(",", meta.Dimensions)}");
-                 }*/
-                Debug.WriteLine("TEXT INPUTS:");
-                foreach (var m in _txt.InputMetadata)
-                    Debug.WriteLine($" - {m.Key}");
+            var ids = _tokenizer.EncodeToIds("cat");
+            Debug.WriteLine("TOKENS for 'cat': " + string.Join(",", ids.Take(20)));
 
-                Debug.WriteLine("IMAGE INPUTS:");
-                foreach (var m in _img.InputMetadata)
-                    Debug.WriteLine($" - {m.Key}");
-
-
-            });
+            // OPTIONAL: run test after app starts
+            Task.Run(TestCatImageSimilarityAsync);
         }
 
-        /// <summary>
-        public async Task TestCatImageSimilarityAsync()
+        // -----------------------------------------------------
+        // Normalize embedding (L2)
+        // -----------------------------------------------------
+        private static float[] Normalize(float[] v)
         {
-            try
-            {
-                string baseDir = AppContext.BaseDirectory;
-                string imagePath = Path.Combine(baseDir, "Assets", "cat.jpg");
+            double sum = 0;
+            foreach (var x in v) sum += x * x;
 
-                if (!File.Exists(imagePath))
-                {
-                    System.Diagnostics.Debug.WriteLine("ERROR: cat.jpg not found at " + imagePath);
-                    return;
-                }
+            double norm = Math.Sqrt(sum);
+            if (norm == 0) return v;
 
-                // Load the image bytes
-                byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
+            float[] o = new float[v.Length];
+            for (int i = 0; i < v.Length; i++)
+                o[i] = (float)(v[i] / norm);
 
-                System.Diagnostics.Debug.WriteLine("Loaded image: " + imagePath);
-
-                // 1. Compute image embedding
-                float[] imgVec = GetImageEmbedding(imageBytes);
-                System.Diagnostics.Debug.WriteLine("Image embedding length: " + imgVec.Length);
-
-                // 2. Compute text embeddings
-                float[] catVec = GetTextEmbedding("a photo of a cat");
-                float[] dogVec = GetTextEmbedding("a photo of a dog");
-                float[] politicsVec = GetTextEmbedding("a photo of politics");
-
-                System.Diagnostics.Debug.WriteLine("Text embedding length: " + catVec.Length);
-
-                // 3. Compute cosine similarities
-                double catScore = Services.MathService.Cosine(imgVec, catVec);
-                double dogScore = Services.MathService.Cosine(imgVec, dogVec);
-                double polScore = Services.MathService.Cosine(imgVec, politicsVec);
-
-                // 4. Show results
-                System.Diagnostics.Debug.WriteLine("=== CLIP Similarity Test ===");
-                System.Diagnostics.Debug.WriteLine("Image: cat.jpg");
-                System.Diagnostics.Debug.WriteLine($"Similarity to \"a photo of a cat\":      {catScore:F4}");
-                System.Diagnostics.Debug.WriteLine($"Similarity to \"a photo of a dog\":      {dogScore:F4}");
-                System.Diagnostics.Debug.WriteLine($"Similarity to \"p photo of politics\": {polScore:F4}");
-                System.Diagnostics.Debug.WriteLine("=============================");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("TEST ERROR: " + ex.ToString());
-            }
+            return o;
         }
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
 
         // -----------------------------------------------------
-        // TEXT → EMBEDDING
+        // TEXT → EMBEDDING (via prompt templates + averaging)
         // -----------------------------------------------------
+        /* public float[] GetTextEmbedding(string text)
+         {
+             List<float[]> embeddings = new();
+
+             foreach (var t in Templates)
+             {
+                 string prompt = t.Replace("{}", text);
+
+                 long[] ids = _tokenizer.EncodeToIds(prompt);
+                 var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
+
+                 var inputs = new List<NamedOnnxValue>
+                 {
+                     NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
+                 };
+
+                 using var results = _txt.Run(inputs);
+                 float[] raw = results.First().AsEnumerable<float>().ToArray();
+                 embeddings.Add(Normalize(raw));
+             }
+
+             // Average all prompt embeddings
+             float[] avg = new float[embeddings[0].Length];
+             foreach (var e in embeddings)
+                 for (int i = 0; i < avg.Length; i++)
+                     avg[i] += e[i];
+
+             for (int i = 0; i < avg.Length; i++)
+                 avg[i] /= embeddings.Count;
+
+             return Normalize(avg);
+         }*/
+
+
         public float[] GetTextEmbedding(string text)
         {
-            // Use the tokenizer to get 77 token ids (Int64)
-            long[] ids = _tokenizer.EncodeToIds(text);
 
-            var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
+                 long[] ids = _tokenizer.EncodeToIds(text);
+                var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
 
-            var inputs = new List<NamedOnnxValue>
-            {
-                NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
-            };
+                var inputs = new List<NamedOnnxValue>
+                {
+                    NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
+                };
 
-            using var results = _txt.Run(inputs);
-            return results.First().AsEnumerable<float>().ToArray();
+                using var results = _txt.Run(inputs);
+                float[] raw = results.First().AsEnumerable<float>().ToArray();
+                return Normalize(raw);
         }
-
-
 
         // -----------------------------------------------------
         // IMAGE → EMBEDDING
@@ -164,19 +145,15 @@ namespace SmartMemeSearch.Services
             };
 
             using var results = _img.Run(inputs);
-            return results.First().AsEnumerable<float>().ToArray();
+            float[] raw = results.First().AsEnumerable<float>().ToArray();
+            return Normalize(raw);
         }
 
         // -----------------------------------------------------
-        // IMAGE PREPROCESSING (CLIP standard):
-        // 1. decode → bitmap
-        // 2. resize to 224x224
-        // 3. normalize per-channel
-        // 4. convert to CHW float tensor
+        // IMAGE PREPROCESSING — CLIP Standard
         // -----------------------------------------------------
         private Tensor<float> PreprocessImage(byte[] bytes)
         {
-            // Bridge async WinRT imaging APIs to sync caller
             return PreprocessImageAsync(bytes).GetAwaiter().GetResult();
         }
 
@@ -204,7 +181,7 @@ namespace SmartMemeSearch.Services
                 ExifOrientationMode.IgnoreExifOrientation,
                 ColorManagementMode.DoNotColorManage);
 
-            byte[] pixels = pixelData.DetachPixelData(); // BGRA8
+            byte[] pixels = pixelData.DetachPixelData();
 
             float[] data = new float[1 * 3 * size * size];
 
@@ -215,25 +192,61 @@ namespace SmartMemeSearch.Services
             {
                 for (int x = 0; x < size; x++)
                 {
-                    int pixelIndex = (y * size + x) * 4;
-                    byte r = pixels[pixelIndex + 0];
-                    byte g = pixels[pixelIndex + 1];
-                    byte b = pixels[pixelIndex + 2];
+                    int idxImg = (y * size + x) * 4;
+
+                    byte r = pixels[idxImg + 0];
+                    byte g = pixels[idxImg + 1];
+                    byte b = pixels[idxImg + 2];
 
                     int idx = y * size + x;
 
-
-                    // R channel
                     data[idx] = ((r / 255f) - mean[0]) / std[0];
-                    // G channel
                     data[idx + size * size] = ((g / 255f) - mean[1]) / std[1];
-                    // B channel
                     data[idx + 2 * size * size] = ((b / 255f) - mean[2]) / std[2];
-
                 }
             }
 
             return new DenseTensor<float>(data, new[] { 1, 3, size, size });
+        }
+
+        // -----------------------------------------------------
+        // Built-in test for debugging
+        // -----------------------------------------------------
+        public async Task TestCatImageSimilarityAsync()
+        {
+            try
+            {
+                string baseDir = AppContext.BaseDirectory;
+                string imagePath = Path.Combine(baseDir, "Assets", "cat.jpg");
+
+                if (!File.Exists(imagePath))
+                {
+                    Debug.WriteLine("ERROR: cat.jpg not found");
+                    return;
+                }
+
+                byte[] imgBytes = await File.ReadAllBytesAsync(imagePath);
+
+                float[] img = GetImageEmbedding(imgBytes);
+
+                float[] cat = GetTextEmbedding("cat");
+                float[] dog = GetTextEmbedding("dog");
+                float[] pol = GetTextEmbedding("politics");
+
+                double c = MathService.Cosine(img, cat);
+                double d = MathService.Cosine(img, dog);
+                double p = MathService.Cosine(img, pol);
+
+                Debug.WriteLine("=== CLIP Similarity Test ===");
+                Debug.WriteLine($"cat:      {c:F4}");
+                Debug.WriteLine($"dog:      {d:F4}");
+                Debug.WriteLine($"politics: {p:F4}");
+                Debug.WriteLine("=============================");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("TEST ERROR: " + ex);
+            }
         }
     }
 }
