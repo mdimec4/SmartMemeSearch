@@ -100,18 +100,36 @@ namespace SmartMemeSearch.Services
 
         public void RemoveMissingFiles(IEnumerable<string> existingFiles)
         {
+            var set = new HashSet<string>(existingFiles, StringComparer.OrdinalIgnoreCase);
+
             using var con = new SqliteConnection($"Data Source={_dbPath}");
             con.Open();
 
-            var cmd = con.CreateCommand();
-            cmd.CommandText =
-            @"
-            DELETE FROM embeddings
-            WHERE file_path NOT IN (SELECT value FROM json_each($files));
-            ";
+            var select = con.CreateCommand();
+            select.CommandText = "SELECT file_path FROM embeddings;";
+            var toDelete = new List<string>();
 
-            cmd.Parameters.AddWithValue("$files", System.Text.Json.JsonSerializer.Serialize(existingFiles));
-            cmd.ExecuteNonQuery();
+            using (var r = select.ExecuteReader())
+            {
+                while (r.Read())
+                {
+                    string path = r.GetString(0);
+                    if (!set.Contains(path))
+                        toDelete.Add(path);
+                }
+            }
+
+            foreach (var path in toDelete)
+            {
+                // Remove from DB
+                var del = con.CreateCommand();
+                del.CommandText = "DELETE FROM embeddings WHERE file_path = $p;";
+                del.Parameters.AddWithValue("$p", path);
+                del.ExecuteNonQuery();
+
+                // Remove cached thumbnail
+                ThumbnailCache.Delete(path);
+            }
         }
 
 

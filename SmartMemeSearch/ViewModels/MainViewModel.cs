@@ -114,6 +114,9 @@ namespace SmartMemeSearch.ViewModels
 
         private async Task ImportFolder()
         {
+            if (IsImporting)
+                return;
+
             var picker = new Windows.Storage.Pickers.FolderPicker();
             picker.FileTypeFilter.Add("*");
 
@@ -150,14 +153,22 @@ namespace SmartMemeSearch.ViewModels
 
         private async Task LoadThumbnailAsync(SearchResult r)
         {
-            var bmp = await ThumbnailCache.LoadAsync(r.FilePath);
-
-            _dispatcher.TryEnqueue(() =>
+            try
             {
-                r.Thumbnail = bmp;
-                OnPropertyChanged(nameof(Results));
-            });
+                var bmp = await ThumbnailCache.LoadAsync(r.FilePath);
+
+                _dispatcher.TryEnqueue(() =>
+                {
+                    r.Thumbnail = bmp;
+                    OnPropertyChanged(nameof(Results));
+                });
+            }
+            catch
+            {
+                // ignore errors for missing/bad files
+            }
         }
+
 
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
         {

@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
@@ -20,6 +21,8 @@ namespace SmartMemeSearch.Services
         private readonly InferenceSession _img;
         private readonly InferenceSession _txt;
         private readonly JsonClipTokenizer _tokenizer;
+
+        private static readonly SemaphoreSlim _clipImageLock = new SemaphoreSlim(1, 1);
 
         // Strong prompt templates (OpenAI used 80, but these already help a LOT)
         private static readonly string[] Templates = new[]
@@ -52,7 +55,7 @@ namespace SmartMemeSearch.Services
 
 
             // OPTIONAL: run test after app starts
-//            Task.Run(TestCatImageSimilarityAsync);
+            //            Task.Run(TestCatImageSimilarityAsync);
         }
 
         // -----------------------------------------------------
@@ -78,37 +81,37 @@ namespace SmartMemeSearch.Services
         // TEXT → EMBEDDING (via prompt templates + averaging)
         // -----------------------------------------------------
         public float[] GetTextEmbedding(string text)
-         {
-             List<float[]> embeddings = new();
+        {
+            List<float[]> embeddings = new();
 
-             foreach (var t in Templates)
-             {
-                 string prompt = t.Replace("{}", text);
+            foreach (var t in Templates)
+            {
+                string prompt = t.Replace("{}", text);
 
-                 long[] ids = _tokenizer.EncodeToIds(prompt);
-                 var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
+                long[] ids = _tokenizer.EncodeToIds(prompt);
+                var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
 
-                 var inputs = new List<NamedOnnxValue>
+                var inputs = new List<NamedOnnxValue>
                  {
                      NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
                  };
 
-                 using var results = _txt.Run(inputs);
-                 float[] raw = results.First().AsEnumerable<float>().ToArray();
-                 embeddings.Add(Normalize(raw));
-             }
+                using var results = _txt.Run(inputs);
+                float[] raw = results.First().AsEnumerable<float>().ToArray();
+                embeddings.Add(Normalize(raw));
+            }
 
-             // Average all prompt embeddings
-             float[] avg = new float[embeddings[0].Length];
-             foreach (var e in embeddings)
-                 for (int i = 0; i < avg.Length; i++)
-                     avg[i] += e[i];
+            // Average all prompt embeddings
+            float[] avg = new float[embeddings[0].Length];
+            foreach (var e in embeddings)
+                for (int i = 0; i < avg.Length; i++)
+                    avg[i] += e[i];
 
-             for (int i = 0; i < avg.Length; i++)
-                 avg[i] /= embeddings.Count;
+            for (int i = 0; i < avg.Length; i++)
+                avg[i] /= embeddings.Count;
 
-             return Normalize(avg);
-         }
+            return Normalize(avg);
+        }
 
         /*
         public float[] GetTextEmbedding(string text)
@@ -132,25 +135,42 @@ namespace SmartMemeSearch.Services
         // -----------------------------------------------------
         public float[] GetImageEmbedding(byte[] bytes)
         {
-            var tensor = PreprocessImage(bytes);
-
-            var inputs = new List<NamedOnnxValue>
+            // Defensive: never let multiple CLIP image runs overlap
+            _clipImageLock.Wait();
+            try
             {
-                NamedOnnxValue.CreateFromTensor("pixel_values", tensor)
-            };
+                var tensor = PreprocessImage(bytes);   // uses WinRT imaging
+                var inputs = new List<NamedOnnxValue>
+                {
+                    NamedOnnxValue.CreateFromTensor("pixel_values", tensor)
+                };
 
-            using var results = _img.Run(inputs);
-            float[] raw = results.First().AsEnumerable<float>().ToArray();
-            return Normalize(raw);
+                using var results = _img.Run(inputs);
+                return results.First().AsEnumerable<float>().ToArray();
+            }
+            finally
+            {
+                _clipImageLock.Release();
+            }
         }
+
 
         // -----------------------------------------------------
         // IMAGE PREPROCESSING — CLIP Standard
         // -----------------------------------------------------
         private Tensor<float> PreprocessImage(byte[] bytes)
         {
-            return PreprocessImageAsync(bytes).GetAwaiter().GetResult();
+            _clipImageLock.Wait();
+            try
+            {
+                return PreprocessImageAsync(bytes).GetAwaiter().GetResult();
+            }
+            finally
+            {
+                _clipImageLock.Release();
+            }
         }
+
 
         private async Task<Tensor<float>> PreprocessImageAsync(byte[] bytes)
         {

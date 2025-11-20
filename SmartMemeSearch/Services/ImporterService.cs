@@ -33,28 +33,10 @@ namespace SmartMemeSearch.Services
 
             foreach (var file in imgList)
             {
-                long mod = File.GetLastWriteTimeUtc(file).Ticks;
-                if (dbFiles.TryGetValue(file, out long oldMod) && oldMod == mod)
-                {
-                    // unchanged → skip
-                    continue;
-                }
-
                 onFile?.Invoke(file);
                 onProgress?.Invoke((double)index / total);
 
-                byte[] bytes = await File.ReadAllBytesAsync(file);
-
-                float[] embedding = _clip.GetImageEmbedding(bytes);
-                string ocrText = await _ocr.ExtractTextAsync(bytes);
-
-                _db.InsertOrUpdate(new MemeEmbedding
-                {
-                    FilePath = file,
-                    Vector = embedding,
-                    OcrText = ocrText,
-                    LastModified = File.GetLastWriteTimeUtc(file).Ticks
-                });
+                await ImportSingleAsync(file);
 
                 index++;
             }
@@ -69,8 +51,30 @@ namespace SmartMemeSearch.Services
 
             byte[] bytes = await File.ReadAllBytesAsync(file);
 
-            float[] embedding = _clip.GetImageEmbedding(bytes);
-            string ocrText = await _ocr.ExtractTextAsync(bytes);
+            float[] embedding;
+
+            try
+            {
+                embedding = _clip.GetImageEmbedding(bytes);
+            }
+            catch (Exception ex)
+            {
+                // Log and skip this file
+                System.Diagnostics.Debug.WriteLine($"CLIP image embedding failed for {file}: {ex}");
+                return; // do not insert into DB
+            }
+
+            string ocrText;
+            try
+            {
+                ocrText = await _ocr.ExtractTextAsync(bytes);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"OCR failed for {file}: {ex}");
+                ocrText = "";
+            }
+
 
             _db.InsertOrUpdate(new MemeEmbedding
             {
@@ -79,13 +83,21 @@ namespace SmartMemeSearch.Services
                 OcrText = ocrText,
                 LastModified = File.GetLastWriteTimeUtc(file).Ticks
             });
+
+            // Pre-generate thumbnail so search feels instant
+            await ThumbnailCache.PreGenerateAsync(file);
         }
+
 
 
         public bool IsImage(string path)
         {
             string ext = Path.GetExtension(path).ToLower();
-            return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp" || ext == ".gif";
+            return ext == ".jpg" || ext == ".jpeg" ||
+                   ext == ".png" || ext == ".bmp" ||
+                   ext == ".gif" || ext == ".webp" ||
+                   ext == ".tif" || ext == ".tiff" ||
+                   ext == ".heic";
         }
     }
 }
