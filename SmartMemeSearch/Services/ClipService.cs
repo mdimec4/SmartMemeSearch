@@ -22,7 +22,7 @@ namespace SmartMemeSearch.Services
         private readonly JsonClipTokenizer _tokenizer;
 
         // Strong prompt templates (OpenAI used 80, but these already help a LOT)
-        /*private static readonly string[] Templates = new[]
+        private static readonly string[] Templates = new[]
         {
             "a photo of a {}",
             "a close-up photo of a {}",
@@ -30,7 +30,7 @@ namespace SmartMemeSearch.Services
             "a jpeg photo of a {}",
             "a good photo of a {}",
             "a low-resolution photo of a {}"
-        };*/
+        };
 
         public ClipService()
         {
@@ -79,10 +79,11 @@ namespace SmartMemeSearch.Services
             return o;
         }
 
+        // TODO IMPORTANT: Pobably want to re-eable this
         // -----------------------------------------------------
         // TEXT → EMBEDDING (via prompt templates + averaging)
         // -----------------------------------------------------
-        /* public float[] GetTextEmbedding(string text)
+        public float[] GetTextEmbedding(string text)
          {
              List<float[]> embeddings = new();
 
@@ -113,9 +114,9 @@ namespace SmartMemeSearch.Services
                  avg[i] /= embeddings.Count;
 
              return Normalize(avg);
-         }*/
+         }
 
-
+        /*
         public float[] GetTextEmbedding(string text)
         {
 
@@ -130,7 +131,7 @@ namespace SmartMemeSearch.Services
                 using var results = _txt.Run(inputs);
                 float[] raw = results.First().AsEnumerable<float>().ToArray();
                 return Normalize(raw);
-        }
+        }*/
 
         // -----------------------------------------------------
         // IMAGE → EMBEDDING
