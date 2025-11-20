@@ -37,6 +37,10 @@ namespace SmartMemeSearch.Services
             );
 
             CREATE INDEX IF NOT EXISTS idx_ocr_text ON embeddings(ocr_text);
+
+            CREATE TABLE IF NOT EXISTS folders (
+                path TEXT PRIMARY KEY
+            );
             ";
 
             cmd.ExecuteNonQuery();
@@ -94,6 +98,23 @@ namespace SmartMemeSearch.Services
             }
         }
 
+        public void RemoveMissingFiles(IEnumerable<string> existingFiles)
+        {
+            using var con = new SqliteConnection($"Data Source={_dbPath}");
+            con.Open();
+
+            var cmd = con.CreateCommand();
+            cmd.CommandText =
+            @"
+            DELETE FROM embeddings
+            WHERE file_path NOT IN (SELECT value FROM json_each($files));
+            ";
+
+            cmd.Parameters.AddWithValue("$files", System.Text.Json.JsonSerializer.Serialize(existingFiles));
+            cmd.ExecuteNonQuery();
+        }
+
+
         // ------------------------------------------------------------
         // HELPERS — FLOAT[] <-> BYTE[]
         // ------------------------------------------------------------
@@ -109,6 +130,34 @@ namespace SmartMemeSearch.Services
             float[] arr = new float[bytes.Length / sizeof(float)];
             Buffer.BlockCopy(bytes, 0, arr, 0, bytes.Length);
             return arr;
+        }
+
+        public void AddFolder(string path)
+        {
+            using var con = new SqliteConnection($"Data Source={_dbPath}");
+            con.Open();
+
+            var cmd = con.CreateCommand();
+            cmd.CommandText = "INSERT OR IGNORE INTO folders (path) VALUES ($p);";
+            cmd.Parameters.AddWithValue("$p", path);
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<string> GetFolders()
+        {
+            var list = new List<string>();
+
+            using var con = new SqliteConnection($"Data Source={_dbPath}");
+            con.Open();
+
+            var cmd = con.CreateCommand();
+            cmd.CommandText = "SELECT path FROM folders;";
+
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+                list.Add(r.GetString(0));
+
+            return list;
         }
     }
 }

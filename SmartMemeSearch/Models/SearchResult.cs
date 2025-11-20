@@ -7,5 +7,8 @@
 
         // Optional: for future UI display
         public string OcrPreview { get; set; } = string.Empty;
+
+        // Thumbnail image (loaded asynchronously)
+        public Microsoft.UI.Xaml.Media.Imaging.BitmapImage? Thumbnail { get; set; }
     }
 }

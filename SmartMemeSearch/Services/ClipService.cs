@@ -40,25 +40,19 @@ namespace SmartMemeSearch.Services
             string textModelPath = Path.Combine(baseDir, "Assets", "clip_text.onnx");
             string tokenizerPath = Path.Combine(baseDir, "Assets", "tokenizer.json");
 
-            _img = new InferenceSession(imageModelPath);
-            _txt = new InferenceSession(textModelPath);
+            var opts = new SessionOptions();
+            opts.AppendExecutionProvider_DML();   // <--- GPU
+            opts.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING;
+
+            _img = new InferenceSession(imageModelPath, opts);
+            _txt = new InferenceSession(textModelPath, opts);
             _tokenizer = new JsonClipTokenizer(tokenizerPath);
 
             Debug.WriteLine("Loaded Xenova CLIP ONNX models");
 
-            Debug.WriteLine("=== TEXT MODEL INPUTS ===");
-            foreach (var inp in _txt.InputMetadata)
-                Debug.WriteLine($"Name={inp.Key}, Type={inp.Value.ElementType}, Shape={string.Join(",", inp.Value.Dimensions)}");
-
-            Debug.WriteLine("=== IMAGE MODEL INPUTS ===");
-            foreach (var inp in _img.InputMetadata)
-                Debug.WriteLine($"Name={inp.Key}, Type={inp.Value.ElementType}, Shape={string.Join(",", inp.Value.Dimensions)}");
-
-            var ids = _tokenizer.EncodeToIds("cat");
-            Debug.WriteLine("TOKENS for 'cat': " + string.Join(",", ids.Take(20)));
 
             // OPTIONAL: run test after app starts
-            Task.Run(TestCatImageSimilarityAsync);
+//            Task.Run(TestCatImageSimilarityAsync);
         }
 
         // -----------------------------------------------------

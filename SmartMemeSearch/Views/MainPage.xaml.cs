@@ -10,8 +10,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Storage.Streams;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -26,6 +28,21 @@ namespace SmartMemeSearch.Views
         public MainPage()
         {
             InitializeComponent();
+        }
+
+        private async void CopyImage_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            if (sender is Button btn &&
+                btn.DataContext is SmartMemeSearch.SearchResult r &&
+                File.Exists(r.FilePath))
+            {
+                var dp = new DataPackage();
+                dp.SetBitmap(RandomAccessStreamReference.CreateFromFile(
+                    await Windows.Storage.StorageFile.GetFileFromPathAsync(r.FilePath)
+                ));
+
+                Clipboard.SetContent(dp);
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SmartMemeSearch.Models;
+using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using SmartMemeSearch.Models;
 
 namespace SmartMemeSearch.Services
 {
@@ -19,37 +19,70 @@ namespace SmartMemeSearch.Services
             _db = db;
         }
 
-        public async Task ImportFolderAsync(string folder)
+        public async Task ImportFolderAsync(
+            string folder,
+            Action<string> onFile,
+            Action<double> onProgress)
         {
+            var dbFiles = _db.GetAllEmbeddings().ToDictionary(e => e.FilePath, e => e.LastModified);
+
             string[] images = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
+            var imgList = images.Where(IsImage).ToArray();
+            int total = imgList.Length;
+            int index = 0;
 
-            foreach (var file in images)
+            foreach (var file in imgList)
             {
-                if (!IsImage(file)) continue;
+                long mod = File.GetLastWriteTimeUtc(file).Ticks;
+                if (dbFiles.TryGetValue(file, out long oldMod) && oldMod == mod)
+                {
+                    // unchanged → skip
+                    continue;
+                }
 
-                var info = new FileInfo(file);
-                long lastMod = info.LastWriteTimeUtc.Ticks;
+                onFile?.Invoke(file);
+                onProgress?.Invoke((double)index / total);
 
                 byte[] bytes = await File.ReadAllBytesAsync(file);
 
-                // CLIP embedding
                 float[] embedding = _clip.GetImageEmbedding(bytes);
-
-                // OCR text
                 string ocrText = await _ocr.ExtractTextAsync(bytes);
 
-                // Save
                 _db.InsertOrUpdate(new MemeEmbedding
                 {
                     FilePath = file,
                     Vector = embedding,
                     OcrText = ocrText,
-                    LastModified = lastMod
+                    LastModified = File.GetLastWriteTimeUtc(file).Ticks
                 });
+
+                index++;
             }
+
+            onProgress?.Invoke(1.0);
         }
 
-        private bool IsImage(string path)
+        public async Task ImportSingleAsync(string file)
+        {
+            if (!IsImage(file))
+                return;
+
+            byte[] bytes = await File.ReadAllBytesAsync(file);
+
+            float[] embedding = _clip.GetImageEmbedding(bytes);
+            string ocrText = await _ocr.ExtractTextAsync(bytes);
+
+            _db.InsertOrUpdate(new MemeEmbedding
+            {
+                FilePath = file,
+                Vector = embedding,
+                OcrText = ocrText,
+                LastModified = File.GetLastWriteTimeUtc(file).Ticks
+            });
+        }
+
+
+        public bool IsImage(string path)
         {
             string ext = Path.GetExtension(path).ToLower();
             return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp" || ext == ".gif";
