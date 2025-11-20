@@ -1,29 +1,52 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Page
-x:Class="SmartMemeSearch.Views.MainPage"
-xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-xmlns:vm="using:SmartMemeSearch.ViewModels">
-
+    x:Class="SmartMemeSearch.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:SmartMemeSearch.ViewModels">
 
     <Page.DataContext>
         <vm:MainViewModel />
     </Page.DataContext>
 
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-    <StackPanel Spacing="12" Padding="20">
-        <TextBox PlaceholderText="Search memes..." Text="{Binding Query, Mode=TwoWay}"/>
-        <Button Content="Search" Command="{Binding SearchCommand}"/>
-        <ListView ItemsSource="{Binding Results}">
+        <!-- Search box -->
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBox Width="400"
+                     PlaceholderText="Search memes..."
+                     Text="{Binding Query, Mode=TwoWay}"/>
+            <Button Content="Search"
+                    Command="{Binding SearchCommand}"/>
+
+            <Button Content="Import Folder"
+                    Command="{Binding ImportCommand}"/>
+        </StackPanel>
+
+        <!-- Results -->
+        <ListView Grid.Row="2"
+                  ItemsSource="{Binding Results}"
+                  Margin="0,20,0,0">
             <ListView.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding FilePath}"/>
-                        <TextBlock Text=" | Score: "/>
-                        <TextBlock Text="{Binding Score}"/>
+                <DataTemplate x:DataType="vm:SearchResult">
+                    <StackPanel Margin="4">
+                        <TextBlock Text="{x:Bind FilePath}"
+                                   FontSize="14"/>
+                        <TextBlock Text="{Binding Score, StringFormat='Score: {0:F3}'}"
+                                   Foreground="Gray"
+                                   FontSize="12"/>
+                        <TextBlock Text="{Binding OcrPreview}"
+                                   TextWrapping="Wrap"
+                                   FontSize="12"
+                                   Foreground="#666"/>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-    </StackPanel>
+
+    </Grid>
 </Page>
