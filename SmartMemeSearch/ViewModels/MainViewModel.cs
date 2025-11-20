@@ -66,6 +66,8 @@ namespace SmartMemeSearch.ViewModels
             _search = new SearchService(_clip, _db);
             _autoSync = new AutoSyncService(_importer, _db);
 
+            ThumbnailCache.Initialize(_dispatcher);
+
             SearchCommand = new RelayCommand(Search);
             ImportCommand = new RelayCommand(async () => await ImportFolder());
 
@@ -148,21 +150,13 @@ namespace SmartMemeSearch.ViewModels
 
         private async Task LoadThumbnailAsync(SearchResult r)
         {
-            try
+            var bmp = await ThumbnailCache.LoadAsync(r.FilePath);
+
+            _dispatcher.TryEnqueue(() =>
             {
-                var bmp = new BitmapImage();
-                using var stream = File.OpenRead(r.FilePath);
-                await bmp.SetSourceAsync(stream.AsRandomAccessStream());
-                _dispatcher.TryEnqueue(() =>
-                {
-                    r.Thumbnail = bmp;
-                    OnPropertyChanged(nameof(Results));
-                });
-            }
-            catch
-            {
-                // Ignore missing/broken images
-            }
+                r.Thumbnail = bmp;
+                OnPropertyChanged(nameof(Results));
+            });
         }
 
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
