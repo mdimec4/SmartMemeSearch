@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SmartMemeSearch (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "SmartMemeSearch (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

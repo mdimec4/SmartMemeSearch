@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+x:Class="SmartMemeSearch.Views.MainPage"
+xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:vm="using:SmartMemeSearch.ViewModels">
+
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+
+    <StackPanel Spacing="12" Padding="20">
+        <TextBox PlaceholderText="Search memes..." Text="{Binding Query, Mode=TwoWay}"/>
+        <Button Content="Search" Command="{Binding SearchCommand}"/>
+        <ListView ItemsSource="{Binding Results}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding FilePath}"/>
+                        <TextBlock Text=" | Score: "/>
+                        <TextBlock Text="{Binding Score}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </StackPanel>
+</Page>
