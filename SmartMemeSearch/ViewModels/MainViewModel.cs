@@ -90,17 +90,22 @@ namespace SmartMemeSearch.ViewModels
             });
         }
 
-        private async void Search()
+        private void Search()
         {
-            Results.Clear();
-
             var results = _search.Search(Query);
+
+            // Clear collection on UI thread
+            _dispatcher.TryEnqueue(() => Results.Clear());
 
             foreach (var r in results)
             {
-                Results.Add(r);
+                // Add items on UI thread
+                _dispatcher.TryEnqueue(() =>
+                {
+                    Results.Add(r);
+                });
 
-                // Load thumbnail asynchronously
+                // Load thumbnail asynchronously (NOT on UI thread)
                 _ = LoadThumbnailAsync(r);
             }
         }
@@ -148,10 +153,11 @@ namespace SmartMemeSearch.ViewModels
                 var bmp = new BitmapImage();
                 using var stream = File.OpenRead(r.FilePath);
                 await bmp.SetSourceAsync(stream.AsRandomAccessStream());
-                r.Thumbnail = bmp;
-
-                // Notify UI that Thumbnail changed
-                OnPropertyChanged(nameof(Results));
+                _dispatcher.TryEnqueue(() =>
+                {
+                    r.Thumbnail = bmp;
+                    OnPropertyChanged(nameof(Results));
+                });
             }
             catch
             {
