@@ -11,8 +11,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
@@ -23,6 +21,7 @@ namespace SmartMemeSearch.Services
     {
         private readonly InferenceSession _img;
         private readonly InferenceSession _txt;
+        private readonly JsonClipTokenizer _tokenizer;
 
         public ClipService()
         {
@@ -30,33 +29,127 @@ namespace SmartMemeSearch.Services
 
             string imageModelPath = Path.Combine(baseDir, "Assets", "clip_image.onnx");
             string textModelPath = Path.Combine(baseDir, "Assets", "clip_text.onnx");
+            string tokenizerPath = Path.Combine(baseDir, "Assets", "tokenizer.json");
+
 
             _img = new InferenceSession(imageModelPath);
             _txt = new InferenceSession(textModelPath);
 
-            foreach (var kvp in _txt.InputMetadata)
-                System.Diagnostics.Debug.WriteLine("TXT MODEL INPUT: " + kvp.Key);
+            _tokenizer = new JsonClipTokenizer(tokenizerPath);
 
-            foreach (var kvp in _img.InputMetadata)
-                System.Diagnostics.Debug.WriteLine("IMG MODEL INPUT: " + kvp.Key);
+            Task.Run(async () =>
+            {
+                /*var ids = _tokenizer.EncodeToIds("cat");
+                System.Diagnostics.Debug.WriteLine("Tokens for 'cat':");
+                System.Diagnostics.Debug.WriteLine(string.Join(", ", ids.Take(10)));*/
+
+                await TestCatImageSimilarityAsync();
+
+                /* foreach (var kvp in _img.InputMetadata)
+                 {
+                     System.Diagnostics.Debug.WriteLine(
+                         $"IMG Input: {kvp.Key}, Type={kvp.Value.ElementType}, Shape={string.Join(",", kvp.Value.Dimensions)}");
+                 }
+                 foreach (var kvp in _img.OutputMetadata)
+                 {
+                     System.Diagnostics.Debug.WriteLine(
+                         $"IMG Output: {kvp.Key}, Type={kvp.Value.ElementType}, Shape={string.Join(",", kvp.Value.Dimensions)}");
+                 }*/
+
+                /*foreach (var meta in _img.ModelMetadata.CustomMetadataMap)
+                {
+                    System.Diagnostics.Debug.WriteLine($"{meta.Key}: {meta.Value}");
+                }*/
+                /* foreach (var inp in _img.InputMetadata)
+                 {
+                     var meta = inp.Value;
+                     System.Diagnostics.Debug.WriteLine(
+                         $"Input '{inp.Key}': Type={meta.ElementType}, Dims={string.Join(",", meta.Dimensions)}");
+                 }*/
+                Debug.WriteLine("TEXT INPUTS:");
+                foreach (var m in _txt.InputMetadata)
+                    Debug.WriteLine($" - {m.Key}");
+
+                Debug.WriteLine("IMAGE INPUTS:");
+                foreach (var m in _img.InputMetadata)
+                    Debug.WriteLine($" - {m.Key}");
+
+
+            });
         }
+
+        /// <summary>
+        public async Task TestCatImageSimilarityAsync()
+        {
+            try
+            {
+                string baseDir = AppContext.BaseDirectory;
+                string imagePath = Path.Combine(baseDir, "Assets", "cat.jpg");
+
+                if (!File.Exists(imagePath))
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: cat.jpg not found at " + imagePath);
+                    return;
+                }
+
+                // Load the image bytes
+                byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
+
+                System.Diagnostics.Debug.WriteLine("Loaded image: " + imagePath);
+
+                // 1. Compute image embedding
+                float[] imgVec = GetImageEmbedding(imageBytes);
+                System.Diagnostics.Debug.WriteLine("Image embedding length: " + imgVec.Length);
+
+                // 2. Compute text embeddings
+                float[] catVec = GetTextEmbedding("a photo of a cat");
+                float[] dogVec = GetTextEmbedding("a photo of a dog");
+                float[] politicsVec = GetTextEmbedding("a photo of politics");
+
+                System.Diagnostics.Debug.WriteLine("Text embedding length: " + catVec.Length);
+
+                // 3. Compute cosine similarities
+                double catScore = Services.MathService.Cosine(imgVec, catVec);
+                double dogScore = Services.MathService.Cosine(imgVec, dogVec);
+                double polScore = Services.MathService.Cosine(imgVec, politicsVec);
+
+                // 4. Show results
+                System.Diagnostics.Debug.WriteLine("=== CLIP Similarity Test ===");
+                System.Diagnostics.Debug.WriteLine("Image: cat.jpg");
+                System.Diagnostics.Debug.WriteLine($"Similarity to \"a photo of a cat\":      {catScore:F4}");
+                System.Diagnostics.Debug.WriteLine($"Similarity to \"a photo of a dog\":      {dogScore:F4}");
+                System.Diagnostics.Debug.WriteLine($"Similarity to \"p photo of politics\": {polScore:F4}");
+                System.Diagnostics.Debug.WriteLine("=============================");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("TEST ERROR: " + ex.ToString());
+            }
+        }
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
 
         // -----------------------------------------------------
         // TEXT → EMBEDDING
         // -----------------------------------------------------
         public float[] GetTextEmbedding(string text)
         {
-            var ids  = Tokenize(text);
+            // Use the tokenizer to get 77 token ids (Int64)
+            long[] ids = _tokenizer.EncodeToIds(text);
+
+            var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
 
             var inputs = new List<NamedOnnxValue>
             {
-                NamedOnnxValue.CreateFromTensor("input_ids", ids),
+                NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
             };
 
             using var results = _txt.Run(inputs);
-            var output = results.First().AsEnumerable<float>().ToArray();
-            return output;
+            return results.First().AsEnumerable<float>().ToArray();
         }
+
+
 
         // -----------------------------------------------------
         // IMAGE → EMBEDDING
@@ -73,25 +166,6 @@ namespace SmartMemeSearch.Services
             using var results = _img.Run(inputs);
             return results.First().AsEnumerable<float>().ToArray();
         }
-
-        // -----------------------------------------------------
-        // CLIP TEXT TOKENIZER (very simplified BPE stub)
-        // -----------------------------------------------------
-        private Tensor<long> Tokenize(string text)
-        {
-            const int maxLen = 77;
-            long[] ids = new long[maxLen];
-
-            var words = Regex.Split(text.ToLower(), "\\W+")
-                             .Where(w => w.Length > 0)
-                             .ToArray();
-
-            for (int i = 0; i < Math.Min(words.Length, maxLen); i++)
-                ids[i] = Math.Abs(words[i].GetHashCode()) % 30000;
-
-            return new DenseTensor<long>(ids, new[] { 1, maxLen });
-        }
-
 
         // -----------------------------------------------------
         // IMAGE PREPROCESSING (CLIP standard):
@@ -124,8 +198,8 @@ namespace SmartMemeSearch.Services
             };
 
             var pixelData = await decoder.GetPixelDataAsync(
-                BitmapPixelFormat.Bgra8,
-                BitmapAlphaMode.Premultiplied,
+                BitmapPixelFormat.Rgba8,
+                BitmapAlphaMode.Ignore,
                 transform,
                 ExifOrientationMode.IgnoreExifOrientation,
                 ColorManagementMode.DoNotColorManage);
@@ -142,11 +216,12 @@ namespace SmartMemeSearch.Services
                 for (int x = 0; x < size; x++)
                 {
                     int pixelIndex = (y * size + x) * 4;
-                    byte b = pixels[pixelIndex + 0];
+                    byte r = pixels[pixelIndex + 0];
                     byte g = pixels[pixelIndex + 1];
-                    byte r = pixels[pixelIndex + 2];
+                    byte b = pixels[pixelIndex + 2];
 
                     int idx = y * size + x;
+
 
                     // R channel
                     data[idx] = ((r / 255f) - mean[0]) / std[0];
@@ -154,6 +229,7 @@ namespace SmartMemeSearch.Services
                     data[idx + size * size] = ((g / 255f) - mean[1]) / std[1];
                     // B channel
                     data[idx + 2 * size * size] = ((b / 255f) - mean[2]) / std[2];
+
                 }
             }
 
