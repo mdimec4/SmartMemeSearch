@@ -10,7 +10,7 @@ namespace SmartMemeSearch.ViewModels
 {
     public class MainViewModel : BindableBase
     {
-        private string _query;
+        private string _query = string.Empty;
         public string Query
         {
             get => _query;
