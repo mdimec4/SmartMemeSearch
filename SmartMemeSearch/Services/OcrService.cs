@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.UI.Dispatching;
+using System;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
@@ -11,12 +12,14 @@ namespace SmartMemeSearch.Services
     public class OcrService
     {
         private readonly OcrEngine _engine;
+        private readonly DispatcherQueue _dispatcher;
 
-        public OcrService()
+        public OcrService(DispatcherQueue dispatcher)
         {
             // Use system language or default to English
             _engine = OcrEngine.TryCreateFromLanguage(
                 new Windows.Globalization.Language("en-US"));
+            _dispatcher = dispatcher;
         }
 
         public async Task<string> ExtractTextAsync(byte[] imageBytes)
@@ -27,7 +30,9 @@ namespace SmartMemeSearch.Services
                 await ras.WriteAsync(imageBytes.AsBuffer());
                 ras.Seek(0);
 
-                var decoder = await BitmapDecoder.CreateAsync(ras);
+                var decoder = await _dispatcher.EnqueueAsync(() =>
+                    BitmapDecoder.CreateAsync(ras).AsTask()
+                );
 
                 var pixelData = await decoder.GetPixelDataAsync(
                     BitmapPixelFormat.Rgba8,

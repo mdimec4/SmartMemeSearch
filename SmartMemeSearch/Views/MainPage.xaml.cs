@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using SmartMemeSearch.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,6 +30,23 @@ namespace SmartMemeSearch.Views
         {
             InitializeComponent();
         }
+
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        {
+            var vm = (MainViewModel)DataContext;
+
+            vm.IsImporting = true;
+            vm.CurrentFile = "Checking folders...";
+            vm.ProgressValue = 0;
+
+            await vm.AutoSyncAllAsync();
+
+            vm.IsImporting = false;
+
+            if (!string.IsNullOrWhiteSpace(vm.Query))
+                vm.Search();
+        }
+
 
         private async void CopyImage_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {

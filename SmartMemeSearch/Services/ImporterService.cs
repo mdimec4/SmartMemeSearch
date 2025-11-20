@@ -83,9 +83,6 @@ namespace SmartMemeSearch.Services
                 OcrText = ocrText,
                 LastModified = File.GetLastWriteTimeUtc(file).Ticks
             });
-
-            // Pre-generate thumbnail so search feels instant
-            await ThumbnailCache.PreGenerateAsync(file);
         }
 
 

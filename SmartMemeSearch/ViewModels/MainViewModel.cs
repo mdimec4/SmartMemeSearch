@@ -56,11 +56,13 @@ namespace SmartMemeSearch.ViewModels
         private readonly SearchService _search;
         private readonly AutoSyncService _autoSync;
 
+        private bool _isImportingFolder;
+
 
         public MainViewModel()
         {
             _clip = new ClipService();
-            _ocr = new OcrService();
+            _ocr = new OcrService(_dispatcher);
             _db = new DatabaseService();
             _importer = new ImporterService(_clip, _ocr, _db);
             _search = new SearchService(_clip, _db);
@@ -70,29 +72,9 @@ namespace SmartMemeSearch.ViewModels
 
             SearchCommand = new RelayCommand(Search);
             ImportCommand = new RelayCommand(async () => await ImportFolder());
-
-
-
-            Task.Run(async () =>
-            {
-                IsImporting = true;
-                CurrentFile = "Checking folders...";
-                ProgressValue = 0;
-
-                await _autoSync.SyncAllAsync(
-                    file => _dispatcher.TryEnqueue(() => CurrentFile = file),
-                    p => _dispatcher.TryEnqueue(() => ProgressValue = p)
-                );
-
-                IsImporting = false;
-
-                // After syncing, show results for last query or blank search
-                if (!string.IsNullOrWhiteSpace(Query))
-                    Search();
-            });
         }
 
-        private void Search()
+        public void Search()
         {
             var results = _search.Search(Query);
 
@@ -108,47 +90,59 @@ namespace SmartMemeSearch.ViewModels
                 });
 
                 // Load thumbnail asynchronously (NOT on UI thread)
-                _ = LoadThumbnailAsync(r);
+                if (ThumbnailCache.TryGetMemory(r.FilePath) is BitmapImage bmp && bmp != null)
+                {
+                    r.Thumbnail = bmp;  // reuse memory cache only
+                }
             }
         }
 
         private async Task ImportFolder()
         {
-            if (IsImporting)
-                return;
-
-            var picker = new Windows.Storage.Pickers.FolderPicker();
-            picker.FileTypeFilter.Add("*");
-
-            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.Window);
-            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-
-            var folder = await picker.PickSingleFolderAsync();
-            if (folder == null) return;
-
-            IsImporting = true;
-            CurrentFile = "";
-            ProgressValue = 0;
-
-            await Task.Run(async () =>
+            if (_isImportingFolder) return;
+            _isImportingFolder = true;
+            try
             {
-                _db.AddFolder(folder.Path);
+                if (IsImporting)
+                    return;
 
-                await _importer.ImportFolderAsync(
-                    folder.Path,
-                    file =>
-                    {
-                        _dispatcher.TryEnqueue(() => CurrentFile = file);
-                    },
-                    p =>
-                    {
-                        _dispatcher.TryEnqueue(() => ProgressValue = p);
-                    }
-                );
-            });
+                var picker = new Windows.Storage.Pickers.FolderPicker();
+                picker.FileTypeFilter.Add("*");
 
-            IsImporting = false;
-            Search();
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.Window);
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+                var folder = await picker.PickSingleFolderAsync();
+                if (folder == null) return;
+
+                IsImporting = true;
+                CurrentFile = "";
+                ProgressValue = 0;
+
+                await Task.Run(async () =>
+                {
+                    _db.AddFolder(folder.Path);
+
+                    await _importer.ImportFolderAsync(
+                        folder.Path,
+                        file =>
+                        {
+                            _dispatcher.TryEnqueue(() => CurrentFile = file);
+                        },
+                        p =>
+                        {
+                            _dispatcher.TryEnqueue(() => ProgressValue = p);
+                        }
+                    );
+                });
+
+                IsImporting = false;
+                Search();
+            }
+            finally
+            {
+                _isImportingFolder = false;
+            }
         }
 
         private async Task LoadThumbnailAsync(SearchResult r)
@@ -169,6 +163,13 @@ namespace SmartMemeSearch.ViewModels
             }
         }
 
+        public async Task AutoSyncAllAsync()
+        {
+            await _autoSync.SyncAllAsync(
+                file => _dispatcher.TryEnqueue(() => CurrentFile = file),
+                p => _dispatcher.TryEnqueue(() => ProgressValue = p)
+            );
+        }
 
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
         {

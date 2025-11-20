@@ -23,6 +23,7 @@ namespace SmartMemeSearch.Services
         private readonly JsonClipTokenizer _tokenizer;
 
         private static readonly SemaphoreSlim _clipImageLock = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim _gpuLock = new SemaphoreSlim(1, 1);
 
         // Strong prompt templates (OpenAI used 80, but these already help a LOT)
         private static readonly string[] Templates = new[]
@@ -96,21 +97,29 @@ namespace SmartMemeSearch.Services
                      NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
                  };
 
-                using var results = _txt.Run(inputs);
-                float[] raw = results.First().AsEnumerable<float>().ToArray();
-                embeddings.Add(Normalize(raw));
+                _gpuLock.Wait();
+                try
+                {
+                    using var results = _txt.Run(inputs);
+                    float[] raw = results.First().AsEnumerable<float>().ToArray();
+                    embeddings.Add(Normalize(raw));
+                }
+                finally
+                {
+                    _gpuLock.Release();
+                }
             }
 
-            // Average all prompt embeddings
-            float[] avg = new float[embeddings[0].Length];
-            foreach (var e in embeddings)
+                // Average all prompt embeddings
+                float[] avg = new float[embeddings[0].Length];
+                foreach (var e in embeddings)
+                    for (int i = 0; i < avg.Length; i++)
+                        avg[i] += e[i];
+
                 for (int i = 0; i < avg.Length; i++)
-                    avg[i] += e[i];
+                    avg[i] /= embeddings.Count;
 
-            for (int i = 0; i < avg.Length; i++)
-                avg[i] /= embeddings.Count;
-
-            return Normalize(avg);
+                return Normalize(avg);
         }
 
         /*
@@ -130,9 +139,9 @@ namespace SmartMemeSearch.Services
                 return Normalize(raw);
         }*/
 
-        // -----------------------------------------------------
-        // IMAGE → EMBEDDING
-        // -----------------------------------------------------
+            // -----------------------------------------------------
+            // IMAGE → EMBEDDING
+            // -----------------------------------------------------
         public float[] GetImageEmbedding(byte[] bytes)
         {
             // Defensive: never let multiple CLIP image runs overlap
@@ -145,8 +154,16 @@ namespace SmartMemeSearch.Services
                     NamedOnnxValue.CreateFromTensor("pixel_values", tensor)
                 };
 
-                using var results = _img.Run(inputs);
-                return results.First().AsEnumerable<float>().ToArray();
+                _gpuLock.Wait();
+                try
+                {
+                    using var results = _img.Run(inputs);
+                    return results.First().AsEnumerable<float>().ToArray();
+                }
+                finally
+                {
+                    _gpuLock.Release();
+                }
             }
             finally
             {
@@ -160,15 +177,7 @@ namespace SmartMemeSearch.Services
         // -----------------------------------------------------
         private Tensor<float> PreprocessImage(byte[] bytes)
         {
-            _clipImageLock.Wait();
-            try
-            {
-                return PreprocessImageAsync(bytes).GetAwaiter().GetResult();
-            }
-            finally
-            {
-                _clipImageLock.Release();
-            }
+            return PreprocessImageAsync(bytes).GetAwaiter().GetResult();
         }
 
 

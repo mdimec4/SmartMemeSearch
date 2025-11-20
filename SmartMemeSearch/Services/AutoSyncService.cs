@@ -72,6 +72,8 @@ namespace SmartMemeSearch.Services
                 }
 
                 await _importer.ImportSingleAsync(img);
+                /*await Task.Delay(10); // throttle
+                await ThumbnailCache.PreGenerateAsync(img);*/
             }
 
             // final progress
