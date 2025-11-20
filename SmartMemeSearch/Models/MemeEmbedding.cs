@@ -6,5 +6,7 @@ namespace SmartMemeSearch.Models
     {
         public string FilePath { get; set; } = string.Empty;
         public float[] Vector { get; set; } = Array.Empty<float>();
+        public string OcrText { get; set; } = string.Empty;
+        public long LastModified { get; set; }
     }
 }
