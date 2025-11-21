@@ -4,7 +4,8 @@
     xmlns:conv="using:SmartMemeSearch.Converters"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:vm="using:SmartMemeSearch.ViewModels">
+    xmlns:vm="using:SmartMemeSearch.ViewModels"
+    Loaded="Page_Loaded">
 
     <Page.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>

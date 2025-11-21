@@ -1,12 +1,13 @@
 ﻿using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml.Media.Imaging;
 using SmartMemeSearch.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Windows.Storage.Pickers;
+
 
 namespace SmartMemeSearch.ViewModels
 {
@@ -97,16 +98,22 @@ namespace SmartMemeSearch.ViewModels
             }
         }
 
+
         public async Task ImportFolder()
         {
-            if (_isImportingFolder) return;
+            // Prevent double-click / re-entry
+            if (_isImportingFolder)
+                return;
+
             _isImportingFolder = true;
 
             try
             {
-                // Pick folder...
-                var picker = new Windows.Storage.Pickers.FolderPicker();
+                // 1) Pick folder
+                var picker = new FolderPicker();
                 picker.FileTypeFilter.Add("*");
+
+                // Hook picker to main window
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.Window);
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
@@ -114,22 +121,31 @@ namespace SmartMemeSearch.ViewModels
                 if (folder == null)
                     return;
 
+                // 2) Update UI state
                 IsImporting = true;
                 CurrentFile = "Importing...";
                 ProgressValue = 0;
 
                 string rootPath = folder.Path;
 
+                // 3) Run import work off UI thread
                 await Task.Run(async () =>
                 {
                     await _importer.ImportFolderAsync(
                         rootPath,
                         file => _dispatcher.TryEnqueue(() => CurrentFile = file),
-                        p => _dispatcher.TryEnqueue(() => ProgressValue = p));
+                        p => _dispatcher.TryEnqueue(() => ProgressValue = p)
+                    );
                 });
 
+                // 4) Done
                 CurrentFile = "Done";
                 ProgressValue = 1.0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("IMPORT ERROR: " + ex);
+                CurrentFile = "Import failed";
             }
             finally
             {
@@ -137,6 +153,7 @@ namespace SmartMemeSearch.ViewModels
                 _isImportingFolder = false;
             }
         }
+
 
 
         private async Task LoadThumbnailAsync(SearchResult r)

@@ -31,7 +31,7 @@ namespace SmartMemeSearch.Views
             InitializeComponent();
         }
 
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             var vm = (MainViewModel)DataContext;
 
