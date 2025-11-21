@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SmartMemeSearch.Services
@@ -11,6 +12,9 @@ namespace SmartMemeSearch.Services
         private readonly ClipService _clip;
         private readonly OcrService _ocr;
         private readonly DatabaseService _db;
+
+        // 🔒 Prevent WinRT/GPU crashes by allowing only 1 import at a time
+        private static readonly SemaphoreSlim _importLock = new SemaphoreSlim(1, 1);
 
         public ImporterService(ClipService clip, OcrService ocr, DatabaseService db)
         {
@@ -30,11 +34,9 @@ namespace SmartMemeSearch.Services
                 return;
             }
 
-            // DB snapshot: FilePath -> LastModified ticks
             var dbFiles = _db.GetAllEmbeddings()
                              .ToDictionary(e => e.FilePath, e => e.LastModified);
 
-            // Get all candidate images
             string[] files = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
             var images = files.Where(IsImage).ToArray();
 
@@ -45,31 +47,30 @@ namespace SmartMemeSearch.Services
             {
                 onFile?.Invoke(file);
                 onProgress?.Invoke((double)index / total);
-
                 index++;
 
                 long lastWrite = File.GetLastWriteTimeUtc(file).Ticks;
 
-                // --- SKIP UNCHANGED FILE ---
+                // skip unchanged images
                 if (dbFiles.TryGetValue(file, out long oldStamp) && oldStamp == lastWrite)
-                {
-                    // unchanged → skip import
                     continue;
+
+                await _importLock.WaitAsync();
+                try
+                {
+                    await ImportSingleAsync(file);
+                    await ThumbnailCache.PreGenerateAsync(file);
+                }
+                finally
+                {
+                    _importLock.Release();
                 }
 
-                // --- IMPORT NEW OR MODIFIED FILE ---
-                await ImportSingleAsync(file);
-
-                // Regenerate thumbnail only when necessary
-                await ThumbnailCache.PreGenerateAsync(file);
-
-                // Small delay prevents UI choking
                 await Task.Delay(5);
             }
 
             onProgress?.Invoke(1.0);
         }
-
 
         public async Task ImportSingleAsync(string file)
         {
@@ -79,16 +80,14 @@ namespace SmartMemeSearch.Services
             byte[] bytes = await File.ReadAllBytesAsync(file);
 
             float[] embedding;
-
             try
             {
                 embedding = _clip.GetImageEmbedding(bytes);
             }
             catch (Exception ex)
             {
-                // Log and skip this file
-                System.Diagnostics.Debug.WriteLine($"CLIP image embedding failed for {file}: {ex}");
-                return; // do not insert into DB
+                System.Diagnostics.Debug.WriteLine($"CLIP failed for {file}: {ex}");
+                return;
             }
 
             string ocrText;
@@ -102,7 +101,6 @@ namespace SmartMemeSearch.Services
                 ocrText = "";
             }
 
-
             _db.InsertOrUpdate(new MemeEmbedding
             {
                 FilePath = file,
@@ -111,8 +109,6 @@ namespace SmartMemeSearch.Services
                 LastModified = File.GetLastWriteTimeUtc(file).Ticks
             });
         }
-
-
 
         public bool IsImage(string path)
         {
