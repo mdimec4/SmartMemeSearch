@@ -97,53 +97,47 @@ namespace SmartMemeSearch.ViewModels
             }
         }
 
-        private async Task ImportFolder()
+        public async Task ImportFolder()
         {
             if (_isImportingFolder) return;
             _isImportingFolder = true;
+
             try
             {
-                if (IsImporting)
-                    return;
-
+                // Pick folder...
                 var picker = new Windows.Storage.Pickers.FolderPicker();
                 picker.FileTypeFilter.Add("*");
-
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.Window);
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
                 var folder = await picker.PickSingleFolderAsync();
-                if (folder == null) return;
+                if (folder == null)
+                    return;
 
                 IsImporting = true;
-                CurrentFile = "";
+                CurrentFile = "Importing...";
                 ProgressValue = 0;
+
+                string rootPath = folder.Path;
 
                 await Task.Run(async () =>
                 {
-                    _db.AddFolder(folder.Path);
-
                     await _importer.ImportFolderAsync(
-                        folder.Path,
-                        file =>
-                        {
-                            _dispatcher.TryEnqueue(() => CurrentFile = file);
-                        },
-                        p =>
-                        {
-                            _dispatcher.TryEnqueue(() => ProgressValue = p);
-                        }
-                    );
+                        rootPath,
+                        file => _dispatcher.TryEnqueue(() => CurrentFile = file),
+                        p => _dispatcher.TryEnqueue(() => ProgressValue = p));
                 });
 
-                IsImporting = false;
-                Search();
+                CurrentFile = "Done";
+                ProgressValue = 1.0;
             }
             finally
             {
+                IsImporting = false;
                 _isImportingFolder = false;
             }
         }
+
 
         private async Task LoadThumbnailAsync(SearchResult r)
         {
