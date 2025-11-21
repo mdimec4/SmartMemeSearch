@@ -89,11 +89,11 @@ namespace SmartMemeSearch.ViewModels
                     Results.Add(r);
                 });
 
-                // Load thumbnail asynchronously (NOT on UI thread)
-                if (ThumbnailCache.TryGetMemory(r.FilePath) is BitmapImage bmp && bmp != null)
-                {
-                    r.Thumbnail = bmp;  // reuse memory cache only
-                }
+                var thumb = ThumbnailCache.TryGetMemory(r.FilePath);
+                if (thumb != null)
+                    r.Thumbnail = thumb;
+                else
+                    _ = LoadThumbnailAsync(r);
             }
         }
 
