@@ -24,25 +24,52 @@ namespace SmartMemeSearch.Services
             Action<string> onFile,
             Action<double> onProgress)
         {
-            var dbFiles = _db.GetAllEmbeddings().ToDictionary(e => e.FilePath, e => e.LastModified);
+            if (!Directory.Exists(folder))
+            {
+                onProgress?.Invoke(1.0);
+                return;
+            }
 
-            string[] images = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
-            var imgList = images.Where(IsImage).ToArray();
-            int total = imgList.Length;
+            // DB snapshot: FilePath -> LastModified ticks
+            var dbFiles = _db.GetAllEmbeddings()
+                             .ToDictionary(e => e.FilePath, e => e.LastModified);
+
+            // Get all candidate images
+            string[] files = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
+            var images = files.Where(IsImage).ToArray();
+
+            int total = images.Length;
             int index = 0;
 
-            foreach (var file in imgList)
+            foreach (var file in images)
             {
                 onFile?.Invoke(file);
                 onProgress?.Invoke((double)index / total);
 
+                index++;
+
+                long lastWrite = File.GetLastWriteTimeUtc(file).Ticks;
+
+                // --- SKIP UNCHANGED FILE ---
+                if (dbFiles.TryGetValue(file, out long oldStamp) && oldStamp == lastWrite)
+                {
+                    // unchanged → skip import
+                    continue;
+                }
+
+                // --- IMPORT NEW OR MODIFIED FILE ---
                 await ImportSingleAsync(file);
 
-                index++;
+                // Regenerate thumbnail only when necessary
+                await ThumbnailCache.PreGenerateAsync(file);
+
+                // Small delay prevents UI choking
+                await Task.Delay(5);
             }
 
             onProgress?.Invoke(1.0);
         }
+
 
         public async Task ImportSingleAsync(string file)
         {
