@@ -59,8 +59,8 @@
                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="4">
 
                         <!-- Thumbnail -->
-                        <Image Source="{x:Bind Thumbnail}" 
-               Width="64" Height="64"
+                        <Image Source="{Binding Thumbnail}" 
+               Width="120" Height="120"
                Stretch="UniformToFill"
                Margin="0,0,8,0"/>
 

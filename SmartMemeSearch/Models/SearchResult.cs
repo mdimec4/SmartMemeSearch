@@ -1,6 +1,8 @@
-﻿namespace SmartMemeSearch
+﻿using System.ComponentModel;
+
+namespace SmartMemeSearch
 {
-    public class SearchResult
+    public class SearchResult : BindableBase
     {
         public string FilePath { get; set; } = string.Empty;
         public double Score { get; set; }
@@ -9,6 +11,7 @@
         public string OcrPreview { get; set; } = string.Empty;
 
         // Thumbnail image (loaded asynchronously)
-        public Microsoft.UI.Xaml.Media.Imaging.BitmapImage? Thumbnail { get; set; }
+        private Microsoft.UI.Xaml.Media.Imaging.BitmapImage? _thumbnail;
+        public Microsoft.UI.Xaml.Media.Imaging.BitmapImage? Thumbnail { get => _thumbnail; set=> SetProperty(ref _thumbnail, value); }
     }
 }
