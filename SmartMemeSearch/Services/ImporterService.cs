@@ -37,6 +37,8 @@ namespace SmartMemeSearch.Services
             var dbFiles = _db.GetAllEmbeddings()
                              .ToDictionary(e => e.FilePath, e => e.LastModified);
 
+            _db.AddFolder(folder);
+
             string[] files = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
             var images = files.Where(IsImage).ToArray();
 

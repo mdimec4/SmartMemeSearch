@@ -99,6 +99,8 @@ namespace SmartMemeSearch.ViewModels
 
         public async Task ImportFolder()
         {
+            if (IsImporting)
+                return;
             // Prevent double-click / re-entry
             if (_isImportingFolder)
                 return;

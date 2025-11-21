@@ -1,19 +1,11 @@
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using SmartMemeSearch.ViewModels;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Storage.Streams;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -26,6 +18,8 @@ namespace SmartMemeSearch.Views
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
+
         public MainPage()
         {
             InitializeComponent();
@@ -39,12 +33,20 @@ namespace SmartMemeSearch.Views
             vm.CurrentFile = "Checking folders...";
             vm.ProgressValue = 0;
 
-            await vm.AutoSyncAllAsync();
+            _ = Task.Run(async () =>
+            {
+                await vm.AutoSyncAllAsync();
 
-            vm.IsImporting = false;
+                _dispatcher.TryEnqueue(() =>
+                {
+                    vm.IsImporting = false;
+                    if (!string.IsNullOrWhiteSpace(vm.Query))
+                        vm.Search();
 
-            if (!string.IsNullOrWhiteSpace(vm.Query))
-                vm.Search();
+                });
+            });
+
+
         }
 
 

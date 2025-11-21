@@ -77,6 +77,7 @@ namespace SmartMemeSearch.Services
             }
 
             // final progress
+            onFile("Done");
             onProgress(1.0);
         }
     }
