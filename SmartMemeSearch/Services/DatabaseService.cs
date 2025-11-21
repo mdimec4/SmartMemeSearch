@@ -12,8 +12,10 @@ namespace SmartMemeSearch.Services
 
         public DatabaseService()
         {
-            string baseDir = AppContext.BaseDirectory;
-            _dbPath = Path.Combine(baseDir, "meme_embeddings.db");
+            string localState =
+                Windows.Storage.ApplicationData.Current.LocalFolder.Path;
+
+            _dbPath = Path.Combine(localState, "memes.db");
 
             Initialize();
         }
