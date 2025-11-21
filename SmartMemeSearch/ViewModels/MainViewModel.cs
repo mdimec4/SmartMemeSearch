@@ -11,11 +11,9 @@ using Windows.Storage.Pickers;
 
 namespace SmartMemeSearch.ViewModels
 {
-    public class MainViewModel : BindableBase, INotifyPropertyChanged
+    public class MainViewModel : BindableBase
     {
         private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
-
-        new public event PropertyChangedEventHandler? PropertyChanged;
 
         private string _query = string.Empty;
         public string Query
@@ -180,11 +178,6 @@ namespace SmartMemeSearch.ViewModels
                 file => _dispatcher.TryEnqueue(() => CurrentFile = file),
                 p => _dispatcher.TryEnqueue(() => ProgressValue = p)
             );
-        }
-
-        protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
