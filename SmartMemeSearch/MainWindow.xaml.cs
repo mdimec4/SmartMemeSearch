@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.Versioning;
+using Windows.ApplicationModel;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 
@@ -28,6 +29,11 @@ namespace SmartMemeSearch
         public MainWindow()
         {
             InitializeComponent();
+
+            string iconPath = System.IO.Path.Combine(Package.Current.InstalledLocation.Path, "Assets", "smile.ico");
+            this.AppWindow.SetIcon(iconPath);
+
+
             this.Content = new Views.MainPage();
         }
     }
