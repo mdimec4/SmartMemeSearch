@@ -33,6 +33,7 @@
         <!-- Search box -->
         <StackPanel Orientation="Horizontal" Spacing="8">
             <TextBox Width="400"
+                x:Name="tbSearchBox"
                 PlaceholderText="Search memes..."
                 Text="{Binding Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
@@ -63,23 +64,27 @@
 
             <ListView.KeyboardAccelerators>
 
-                    <!-- Enter = Open -->
-                    <KeyboardAccelerator Key="Enter"
+                <!-- Enter = Open -->
+                <KeyboardAccelerator Key="Enter"
                              Invoked="Open_KA_Invoked"/>
 
-                    <!-- Ctrl+C = Copy image -->
-                    <KeyboardAccelerator Key="C"
+                <!-- Ctrl+C = Copy image -->
+                <KeyboardAccelerator Key="C"
                              Modifiers="Control"
                              Invoked="CopyImage_KA_Invoked"/>
 
-                    <!-- OPTIONAL: Ctrl+Shift+C = Copy file path -->
-                    <KeyboardAccelerator Key="C"
+                <!-- OPTIONAL: Ctrl+Shift+C = Copy file path -->
+                <KeyboardAccelerator Key="C"
                              Modifiers="Control,Shift"
                              Invoked="CopyPath_KA_Invoked"/>
 
-                </ListView.KeyboardAccelerators>
-                
-                <ListView.ItemContainerStyle>
+                <KeyboardAccelerator Key="F"
+                     Modifiers="Control"
+                     Invoked="FocusSearch_KA_Invoked"/>
+
+            </ListView.KeyboardAccelerators>
+
+            <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
 

@@ -259,5 +259,12 @@ namespace SmartMemeSearch.Views
             }
             args.Handled = true;
         }
+
+        private void FocusSearch_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            tbSearchBox.Focus(FocusState.Programmatic);
+            tbSearchBox.SelectAll(); // optional
+            args.Handled = true;
+        }
     }
 }
