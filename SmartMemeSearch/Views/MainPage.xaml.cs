@@ -29,24 +29,29 @@ namespace SmartMemeSearch.Views
         {
             var vm = (MainViewModel)DataContext;
 
+            if (vm.IsImporting) return;
             vm.IsImporting = true;
             vm.CurrentFile = "Checking folders...";
             vm.ProgressValue = 0;
 
             _ = Task.Run(async () =>
             {
-                await vm.AutoSyncAllAsync();
-
-                _dispatcher.TryEnqueue(() =>
+                try
                 {
-                    vm.IsImporting = false;
-                    if (!string.IsNullOrWhiteSpace(vm.Query))
-                        vm.Search();
+                    await vm.AutoSyncAllAsync();
+                }
+                finally
+                {
+                    _dispatcher.TryEnqueue(() =>
+                    {
+                        vm.IsImporting = false;
+                        vm.CurrentFile = "Done";
+                        if (!string.IsNullOrWhiteSpace(vm.Query))
+                            vm.Search();
 
-                });
+                    });
+                }
             });
-
-
         }
 
 

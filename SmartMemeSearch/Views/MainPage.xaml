@@ -26,11 +26,11 @@
         <!-- Search box -->
         <StackPanel Orientation="Horizontal" Spacing="8">
             <TextBox Width="400"
-            PlaceholderText="Search memes..."
-            Text="{Binding Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                PlaceholderText="Search memes..."
+                Text="{Binding Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <Button Content="Import Folder"
-                    Command="{Binding ImportCommand}"/>
+            <Button Content="Manage Meme Folders"
+                Command="{Binding ManageFoldersCommand}"/>
         </StackPanel>
         <StackPanel Grid.Row="1" Margin="0,10,0,0">
             <ProgressBar Minimum="0" 

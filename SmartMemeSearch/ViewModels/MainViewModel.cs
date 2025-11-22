@@ -1,12 +1,12 @@
 ﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml.Controls;
 using SmartMemeSearch.Services;
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Windows.Storage.Pickers;
 
 
 namespace SmartMemeSearch.ViewModels
@@ -55,7 +55,7 @@ namespace SmartMemeSearch.ViewModels
 
         public ObservableCollection<SearchResult> Results { get; } = new();
 
-        public ICommand ImportCommand { get; }
+        public ICommand ManageFoldersCommand { get; }
 
         private readonly ClipService _clip;
         private readonly OcrService _ocr;
@@ -64,7 +64,7 @@ namespace SmartMemeSearch.ViewModels
         private readonly SearchService _search;
         private readonly AutoSyncService _autoSync;
 
-        private bool _isImportingFolder;
+        //private bool _isImportingFolder;
 
 
         public MainViewModel()
@@ -83,7 +83,7 @@ namespace SmartMemeSearch.ViewModels
 
             ThumbnailCache.Initialize(_dispatcher);
 
-            ImportCommand = new RelayCommand(async () => await ImportFolder());
+            ManageFoldersCommand = new RelayCommand(async () => await ManageFolders());
         }
 
         public void Search()
@@ -109,7 +109,7 @@ namespace SmartMemeSearch.ViewModels
             }
         }
 
-
+        /*
         public async Task ImportFolder()
         {
             if (IsImporting)
@@ -165,8 +165,61 @@ namespace SmartMemeSearch.ViewModels
                 IsImporting = false;
                 _isImportingFolder = false;
             }
-        }
+        }*/
 
+        private async Task ManageFolders()
+        {
+            var existing = _db.GetFolders().ToList();
+
+            var dialog = new Views.FolderManagerDialog(existing)
+            {
+                XamlRoot = App.Window?.Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary)
+                return;
+
+            var newList = dialog.Folders.ToList();
+
+            // Save folders
+            _db.SetFolders(newList);
+
+            // Remove embeddings that no longer belong to any folder
+            var all = _db.GetAllEmbeddings();
+            foreach (var e in all)
+            {
+                bool inside = newList.Any(root =>
+                    e.FilePath.StartsWith(root + Path.DirectorySeparatorChar));
+                if (!inside)
+                {
+                    _db.RemoveEmbedding(e.FilePath);   // <- now exists
+                    ThumbnailCache.Delete(e.FilePath); // optional: also clear thumbs
+                }
+            }
+
+            // Re-sync everything based on new folders
+            if (IsImporting) return;
+            IsImporting = true;
+            CurrentFile = "Syncing folders...";
+            ProgressValue = 0;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await AutoSyncAllAsync();
+                }
+                finally
+                {
+                    _dispatcher.TryEnqueue(() =>
+                    {
+                        CurrentFile = "Done";
+                        IsImporting = false;
+                    });
+                }
+
+            });
+        }
 
 
         private async Task LoadThumbnailAsync(SearchResult r)
