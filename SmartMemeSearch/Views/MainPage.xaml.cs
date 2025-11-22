@@ -223,7 +223,41 @@ namespace SmartMemeSearch.Views
                 Debug.WriteLine("Open file failed: " + ex);
             }
         }
+        private void Open_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            if (ResultsList.SelectedItem is SearchResult r)
+                OpenFileWithShell(r.FilePath);
 
+            args.Handled = true;
+        }
 
+        private async void CopyImage_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            if (ResultsList.SelectedItem is SearchResult r)
+            {
+                if (File.Exists(r.FilePath))
+                {
+                    var dp = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                    dp.SetBitmap(
+                        RandomAccessStreamReference.CreateFromFile(
+                            await Windows.Storage.StorageFile.GetFileFromPathAsync(r.FilePath)
+                        )
+                    );
+                    Clipboard.SetContent(dp);
+                }
+            }
+            args.Handled = true;
+        }
+
+        private void CopyPath_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            if (ResultsList.SelectedItem is SearchResult r)
+            {
+                var dp = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                dp.SetText(r.FilePath);
+                Clipboard.SetContent(dp);
+            }
+            args.Handled = true;
+        }
     }
 }
