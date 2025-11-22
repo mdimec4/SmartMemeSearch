@@ -32,10 +32,21 @@
 
         <!-- Search box -->
         <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBox Width="400"
-                x:Name="tbSearchBox"
+            <TextBox x:Name="SearchBox"
+                Width="400"
                 PlaceholderText="Search memes..."
-                Text="{Binding Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                Text="{Binding Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                KeyDown="SearchBox_KeyDown">
+
+                <TextBox.KeyboardAccelerators>
+                    <!-- Escape: Clear search -->
+                    <KeyboardAccelerator Key="Escape"
+                             Invoked="ClearSearch_KA_Invoked"/>
+
+                    <!-- Ctrl+F already added -->
+                </TextBox.KeyboardAccelerators>
+
+            </TextBox>
 
             <Button Content="Manage Meme Folders"
                 Command="{Binding ManageFoldersCommand}"/>

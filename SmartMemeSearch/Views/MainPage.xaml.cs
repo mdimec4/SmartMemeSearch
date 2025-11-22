@@ -262,9 +262,50 @@ namespace SmartMemeSearch.Views
 
         private void FocusSearch_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
-            tbSearchBox.Focus(FocusState.Programmatic);
-            tbSearchBox.SelectAll(); // optional
+            SearchBox.Focus(FocusState.Programmatic);
+            SearchBox.SelectAll(); // optional
             args.Handled = true;
+        }
+        private void ClearSearch_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            SearchBox.Text = "";
+            args.Handled = true;
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (ResultsList.Items.Count == 0)
+                return;
+
+            // Down arrow → select first item
+            if (e.Key == Windows.System.VirtualKey.Down)
+            {
+                ResultsList.SelectedIndex = 0;
+                ResultsList.Focus(FocusState.Programmatic);
+                e.Handled = true;
+                return;
+            }
+
+            // Up arrow → select last item
+            if (e.Key == Windows.System.VirtualKey.Up)
+            {
+                ResultsList.SelectedIndex = ResultsList.Items.Count - 1;
+                ResultsList.Focus(FocusState.Programmatic);
+                e.Handled = true;
+                return;
+            }
+
+            // Enter: focus and select first item
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                if (ResultsList.Items.Count > 0)
+                {
+                    ResultsList.SelectedIndex = 0;
+                    ResultsList.Focus(FocusState.Programmatic);
+                }
+
+                e.Handled = true;
+            }
         }
     }
 }
