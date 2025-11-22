@@ -50,37 +50,59 @@
 
         <!-- Results -->
         <ListView Grid.Row="2"
-                  ItemsSource="{Binding Results}"
-                  Margin="0,20,0,0">
+          ItemsSource="{Binding Results}"
+          Margin="0,20,0,0">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="model:SearchResult">
-                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="4">
+                    <StackPanel Orientation="Horizontal"
+                        Spacing="12"
+                        Margin="4"
+                        IsDoubleTapEnabled="True"
+                        DoubleTapped="ResultItem_DoubleTapped">
+
+                        <!-- Right-click context menu -->
+                        <StackPanel.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Open"
+                                        Tag="{Binding}"
+                                        Click="OpenItem_Click" />
+                                <MenuFlyoutItem Text="Copy image"
+                                        Tag="{Binding}"
+                                        Click="CopyImageMenu_Click" />
+                                <MenuFlyoutItem Text="Copy file"
+                                        Tag="{Binding}"
+                                        Click="CopyFileMenu_Click" />
+                                <MenuFlyoutItem Text="Copy file path"
+                                        Tag="{Binding}"
+                                        Click="CopyPathMenu_Click" />
+                                <MenuFlyoutItem Text="Open containing folder"
+                                        Tag="{Binding}"
+                                        Click="OpenFolderMenu_Click" />
+                            </MenuFlyout>
+                        </StackPanel.ContextFlyout>
 
                         <!-- Thumbnail -->
-                        <Image Source="{Binding Thumbnail}" 
-               Width="120" Height="120"
-               Stretch="UniformToFill"
-               Margin="0,0,8,0"/>
+                        <Image Source="{Binding Thumbnail}"
+                       Width="120"
+                       Height="120"
+                       Stretch="UniformToFill"
+                       Margin="0,0,8,0"/>
 
                         <StackPanel>
                             <TextBlock Text="{x:Bind FilePath}" FontSize="14"/>
                             <TextBlock Text="{x:Bind Score}" FontSize="12" Foreground="Gray"/>
                             <TextBlock Text="{x:Bind OcrPreview}"
-                       TextWrapping="Wrap"
-                       FontSize="12"
-                       Foreground="#666"/>
-
-                            <Button Content="Copy Image"
-                    HorizontalAlignment="Left"
-                    Click="CopyImage_Click"/>
+                               TextWrapping="Wrap"
+                               FontSize="12"
+                               Foreground="#666"/>
+                            <!-- Copy button removed -->
                         </StackPanel>
 
                     </StackPanel>
                 </DataTemplate>
-
             </ListView.ItemTemplate>
-
         </ListView>
+
 
     </Grid>
 </Page>

@@ -1,11 +1,15 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using SmartMemeSearch;
 using SmartMemeSearch.ViewModels;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 using Windows.Storage.Streams;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -94,19 +98,132 @@ namespace SmartMemeSearch.Views
 
 
 
-        private async void CopyImage_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        private static SearchResult? GetResultFromSender(object sender)
         {
-            if (sender is Button btn &&
-                btn.DataContext is SmartMemeSearch.SearchResult r &&
-                File.Exists(r.FilePath))
-            {
-                var dp = new DataPackage();
-                dp.SetBitmap(RandomAccessStreamReference.CreateFromFile(
-                    await Windows.Storage.StorageFile.GetFileFromPathAsync(r.FilePath)
-                ));
+            if (sender is MenuFlyoutItem m)
+                return m.Tag as SearchResult;
 
-                Clipboard.SetContent(dp);
+            if (sender is FrameworkElement fe)
+            {
+                if (fe.DataContext is SearchResult r)
+                    return r;
+            }
+
+            return null;
+        }
+
+        private void ResultItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        {
+            var r = GetResultFromSender(sender);
+            if (r == null || string.IsNullOrEmpty(r.FilePath))
+                return;
+
+            OpenFileWithShell(r.FilePath);
+        }
+
+        private void OpenItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (GetResultFromSender(sender) is { FilePath: var path } &&
+                !string.IsNullOrEmpty(path))
+            {
+                OpenFileWithShell(path);
             }
         }
+
+        private async void CopyImageMenu_Click(object sender, RoutedEventArgs e)
+        {
+            if (GetResultFromSender(sender) is { FilePath: var path } &&
+                File.Exists(path))
+            {
+                try
+                {
+                    var file = await StorageFile.GetFileFromPathAsync(path);
+                    var dp = new DataPackage();
+                    dp.SetBitmap(RandomAccessStreamReference.CreateFromFile(file));
+                    Clipboard.SetContent(dp);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Copy image failed: " + ex);
+                }
+            }
+        }
+
+        private async void CopyFileMenu_Click(object sender, RoutedEventArgs e)
+        {
+            if (GetResultFromSender(sender) is { FilePath: var path } &&
+                File.Exists(path))
+            {
+                try
+                {
+                    var file = await StorageFile.GetFileFromPathAsync(path);
+                    var dp = new DataPackage();
+                    dp.SetStorageItems(new[] { file });
+                    Clipboard.SetContent(dp);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Copy file failed: " + ex);
+                }
+            }
+        }
+
+        private void CopyPathMenu_Click(object sender, RoutedEventArgs e)
+        {
+            if (GetResultFromSender(sender) is { FilePath: var path } &&
+                !string.IsNullOrEmpty(path))
+            {
+                try
+                {
+                    var dp = new DataPackage();
+                    dp.SetText(path);
+                    Clipboard.SetContent(dp);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Copy path failed: " + ex);
+                }
+            }
+        }
+
+        private void OpenFolderMenu_Click(object sender, RoutedEventArgs e)
+        {
+            if (GetResultFromSender(sender) is { FilePath: var path } &&
+                File.Exists(path))
+            {
+                try
+                {
+                    // Open Explorer and select the file
+                    Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"")
+                    {
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Open folder failed: " + ex);
+                }
+            }
+        }
+
+        private void OpenFileWithShell(string path)
+        {
+            try
+            {
+                if (!File.Exists(path))
+                    return;
+
+                Process.Start(new ProcessStartInfo(path)
+                {
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Open file failed: " + ex);
+            }
+        }
+
+
     }
 }
