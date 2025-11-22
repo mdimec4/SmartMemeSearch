@@ -7,16 +7,20 @@ namespace SmartMemeSearch
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected void SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = "")
+        /// <summary>
+        /// Standard MVVM SetProperty — returns TRUE when the value actually changes.
+        /// </summary>
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
-            if (!Equals(field, value))
-            {
-                field = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
+            if (Equals(field, value))
+                return false;
+
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
         }
 
-        protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

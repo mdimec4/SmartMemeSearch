@@ -14,12 +14,22 @@ namespace SmartMemeSearch.ViewModels
     public class MainViewModel : BindableBase
     {
         private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
+        private readonly DispatcherQueueTimer _debounceTimer;
+        private const int DebounceDelayMs = 200;
 
         private string _query = string.Empty;
         public string Query
         {
             get => _query;
-            set => SetProperty(ref _query, value);
+            set
+            {
+                if (SetProperty(ref _query, value))
+                {
+                    // start debounce every time the user types
+                    _debounceTimer.Stop();
+                    _debounceTimer.Start();
+                }
+            }
         }
 
         private bool _isImporting;
@@ -45,7 +55,6 @@ namespace SmartMemeSearch.ViewModels
 
         public ObservableCollection<SearchResult> Results { get; } = new();
 
-        public ICommand SearchCommand { get; }
         public ICommand ImportCommand { get; }
 
         private readonly ClipService _clip;
@@ -67,9 +76,13 @@ namespace SmartMemeSearch.ViewModels
             _search = new SearchService(_clip, _db);
             _autoSync = new AutoSyncService(_importer, _db);
 
+            _debounceTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+            _debounceTimer.Interval = TimeSpan.FromMilliseconds(DebounceDelayMs);
+            _debounceTimer.IsRepeating = false;
+            _debounceTimer.Tick += (s, e) => Search();
+
             ThumbnailCache.Initialize(_dispatcher);
 
-            SearchCommand = new RelayCommand(Search);
             ImportCommand = new RelayCommand(async () => await ImportFolder());
         }
 
