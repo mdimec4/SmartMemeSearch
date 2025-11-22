@@ -100,17 +100,17 @@ namespace SmartMemeSearch.Views
 
         private static SearchResult? GetResultFromSender(object sender)
         {
-            if (sender is MenuFlyoutItem m)
-                return m.Tag as SearchResult;
-
             if (sender is FrameworkElement fe)
-            {
-                if (fe.DataContext is SearchResult r)
-                    return r;
-            }
+                return fe.DataContext as SearchResult;
+
+            if (sender is MenuFlyoutItem mi)
+                return (SearchResult?)(mi.DataContext as SearchResult
+                       ?? (mi.DataContext = (mi.Tag as SearchResult)));
 
             return null;
         }
+
+
 
         private void ResultItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {

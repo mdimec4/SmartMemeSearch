@@ -10,6 +10,13 @@
     <Page.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <conv:BoolToIndeterminateConverter x:Key="BoolToIndeterminateConverter"/>
+        <MenuFlyout x:Key="MemeFlyout">
+            <MenuFlyoutItem Text="Open" Click="OpenItem_Click"/>
+            <MenuFlyoutItem Text="Copy image" Click="CopyImageMenu_Click"/>
+            <MenuFlyoutItem Text="Copy file" Click="CopyFileMenu_Click"/>
+            <MenuFlyoutItem Text="Copy file path" Click="CopyPathMenu_Click"/>
+            <MenuFlyoutItem Text="Open folder" Click="OpenFolderMenu_Click"/>
+        </MenuFlyout>
     </Page.Resources>
 
     <Page.DataContext>
@@ -51,58 +58,84 @@
         <!-- Results -->
         <ListView Grid.Row="2"
           ItemsSource="{Binding Results}"
-          Margin="0,20,0,0">
+          Margin="0,20,0,0"
+          x:Name="ResultsList">
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+
+                    <!-- hover effect -->
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Grid x:Name="RootGrid" Background="Transparent">
+
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroup x:Name="CommonStates">
+
+                                            <VisualState x:Name="Normal" />
+
+                                            <VisualState x:Name="PointerOver">
+                                                <VisualState.Setters>
+                                                    <Setter Target="RootGrid.Background"
+                                                    Value="#22000000"/>
+                                                </VisualState.Setters>
+                                            </VisualState>
+
+                                            <VisualState x:Name="Pressed">
+                                                <VisualState.Setters>
+                                                    <Setter Target="RootGrid.Background"
+                                                    Value="#33000000"/>
+                                                </VisualState.Setters>
+                                            </VisualState>
+
+                                        </VisualStateGroup>
+                                    </VisualStateManager.VisualStateGroups>
+
+                                    <ContentPresenter
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Margin="4"/>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <!-- ItemTemplate from step 1 here -->
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="model:SearchResult">
-                    <StackPanel Orientation="Horizontal"
-                        Spacing="12"
-                        Margin="4"
-                        IsDoubleTapEnabled="True"
-                        DoubleTapped="ResultItem_DoubleTapped">
+                    <Grid
+                        Background="Transparent"
+                        DoubleTapped="ResultItem_DoubleTapped"
+                        ContextFlyout="{StaticResource MemeFlyout}"
+                        Padding="4">
 
-                        <!-- Right-click context menu -->
-                        <StackPanel.ContextFlyout>
-                            <MenuFlyout>
-                                <MenuFlyoutItem Text="Open"
-                                        Tag="{Binding}"
-                                        Click="OpenItem_Click" />
-                                <MenuFlyoutItem Text="Copy image"
-                                        Tag="{Binding}"
-                                        Click="CopyImageMenu_Click" />
-                                <MenuFlyoutItem Text="Copy file"
-                                        Tag="{Binding}"
-                                        Click="CopyFileMenu_Click" />
-                                <MenuFlyoutItem Text="Copy file path"
-                                        Tag="{Binding}"
-                                        Click="CopyPathMenu_Click" />
-                                <MenuFlyoutItem Text="Open containing folder"
-                                        Tag="{Binding}"
-                                        Click="OpenFolderMenu_Click" />
-                            </MenuFlyout>
-                        </StackPanel.ContextFlyout>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
 
-                        <!-- Thumbnail -->
-                        <Image Source="{Binding Thumbnail}"
-                       Width="120"
-                       Height="120"
-                       Stretch="UniformToFill"
-                       Margin="0,0,8,0"/>
+                            <Image Source="{Binding Thumbnail}"
+                               Width="120" Height="120"
+                               Stretch="UniformToFill"
+                               Margin="0,0,8,0"/>
 
-                        <StackPanel>
-                            <TextBlock Text="{x:Bind FilePath}" FontSize="14"/>
-                            <TextBlock Text="{x:Bind Score}" FontSize="12" Foreground="Gray"/>
-                            <TextBlock Text="{x:Bind OcrPreview}"
-                               TextWrapping="Wrap"
-                               FontSize="12"
-                               Foreground="#666"/>
-                            <!-- Copy button removed -->
+                            <StackPanel>
+                                <TextBlock Text="{x:Bind FilePath}" FontSize="14"/>
+                                <TextBlock Text="{x:Bind Score}" FontSize="12" Foreground="Gray"/>
+                                <TextBlock Text="{x:Bind OcrPreview}"
+                                   TextWrapping="Wrap"
+                                   FontSize="12"
+                                   Foreground="#666"/>
+                            </StackPanel>
+
                         </StackPanel>
-
-                    </StackPanel>
+                    </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
-        </ListView>
 
+        </ListView>
 
     </Grid>
 </Page>
