@@ -65,6 +65,7 @@ namespace SmartMemeSearch.ViewModels
         private readonly AutoSyncService _autoSync;
 
         //private bool _isImportingFolder;
+        private bool _syncRunning = false;
 
 
         public MainViewModel()
@@ -83,7 +84,7 @@ namespace SmartMemeSearch.ViewModels
 
             ThumbnailCache.Initialize(_dispatcher);
 
-            ManageFoldersCommand = new RelayCommand(async () => await ManageFolders());
+            ManageFoldersCommand = new RelayCommand(() => _ = ManageFoldersWrapper());
         }
 
         public void Search()
@@ -167,6 +168,33 @@ namespace SmartMemeSearch.ViewModels
             }
         }*/
 
+        private async Task RunExclusiveAutoSyncFromVM()
+        {
+            if (!TryBeginSync())
+                return;
+
+            try
+            {
+                await AutoSyncAllAsync();
+            }
+            finally
+            {
+                _dispatcher.TryEnqueue(() =>
+                {
+                    CurrentFile = "Done";
+                    IsImporting = false;
+                    ProgressValue = 1.0;
+                });
+                EndSync();
+            }
+        }
+
+        private async Task ManageFoldersWrapper()
+        {
+            await Task.Yield();   // ← forces continuation off UI-thread-pre-block
+            await ManageFolders();
+        }
+
         private async Task ManageFolders()
         {
             var existing = _db.GetFolders().ToList();
@@ -182,43 +210,90 @@ namespace SmartMemeSearch.ViewModels
 
             var newList = dialog.Folders.ToList();
 
-            // Save folders
+            // Save new folder list immediately
             _db.SetFolders(newList);
 
-            // Remove embeddings that no longer belong to any folder
-            var all = _db.GetAllEmbeddings();
-            foreach (var e in all)
+            // -------------------------------
+            // Show UI status
+            // -------------------------------
+            _dispatcher.TryEnqueue(() =>
             {
-                bool inside = newList.Any(root =>
-                    e.FilePath.StartsWith(root + Path.DirectorySeparatorChar));
-                if (!inside)
+                IsImporting = true;
+                CurrentFile = "Removing deleted files...";
+                ProgressValue = 0;
+            });
+
+            // -------------------------------
+            // Move ALL heavy lifting off UI thread
+            // -------------------------------
+            await Task.Run(() =>
+            {
+                // read all embeddings OFF UI THREAD
+                var allEmbeds = _db.GetAllEmbeddings().ToList();
+                int total = allEmbeds.Count;
+                int index = 0;
+
+                // open one DB connection for performance
+                using var con = _db.OpenConnection();
+                using var tr = con.BeginTransaction();
+
+                foreach (var e in allEmbeds)
                 {
-                    _db.RemoveEmbedding(e.FilePath);   // <- now exists
-                    ThumbnailCache.Delete(e.FilePath); // optional: also clear thumbs
+                    bool inside = newList.Any(root =>
+                        e.FilePath.StartsWith(root + Path.DirectorySeparatorChar,
+                                              StringComparison.OrdinalIgnoreCase));
+
+                    if (!inside)
+                    {
+                        _dispatcher.TryEnqueue(() => CurrentFile = e.FilePath);
+                        _db.RemoveEmbeddingWithinTransaction(con, e.FilePath);
+                        ThumbnailCache.Delete(e.FilePath);
+                    }
+
+                    index++;
+
+                    // update progress every 100 items (UI throttled)
+                    if (index % 100 == 0)
+                    {
+                        double p = (double)index / total;
+                        _dispatcher.TryEnqueue(() => ProgressValue = p);
+                    }
                 }
+
+                tr.Commit();
+            });
+
+            // -------------------------------
+            // Start background sync (exclusive)
+            // -------------------------------
+            if (!TryBeginSync())
+            {
+                _dispatcher.TryEnqueue(() => IsImporting = false);
+                return;
             }
 
-            // Re-sync everything based on new folders
-            if (IsImporting) return;
-            IsImporting = true;
-            CurrentFile = "Syncing folders...";
-            ProgressValue = 0;
-            _ = Task.Run(async () =>
+            _dispatcher.TryEnqueue(() =>
             {
-                try
-                {
-                    await AutoSyncAllAsync();
-                }
-                finally
-                {
-                    _dispatcher.TryEnqueue(() =>
-                    {
-                        CurrentFile = "Done";
-                        IsImporting = false;
-                    });
-                }
-
+                CurrentFile = "Syncing folders...";
+                ProgressValue = 0;
             });
+
+            // Use the existing helper
+            _ = Task.Run(async () => await RunExclusiveAutoSyncFromVM());
+        }
+
+
+
+        public bool TryBeginSync()
+        {
+            if (_syncRunning) return false;
+            _syncRunning = true;
+            return true;
+        }
+
+        public void EndSync()
+        {
+            _syncRunning = false;
         }
 
 

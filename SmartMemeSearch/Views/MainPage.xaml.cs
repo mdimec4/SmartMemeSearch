@@ -19,40 +19,79 @@ namespace SmartMemeSearch.Views
     public sealed partial class MainPage : Page
     {
         private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
+        private bool _autoSyncStarted = false;
 
         public MainPage()
         {
             InitializeComponent();
         }
 
-        private async void Page_Loaded(object sender, RoutedEventArgs e)
+        private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            var vm = (MainViewModel)DataContext;
+            if (_autoSyncStarted)
+                return;
 
-            if (vm.IsImporting) return;
-            vm.IsImporting = true;
-            vm.CurrentFile = "Checking folders...";
-            vm.ProgressValue = 0;
+            _autoSyncStarted = true;
+
+            var vm = DataContext as MainViewModel;
+            if (vm == null)
+                return;
 
             _ = Task.Run(async () =>
             {
-                try
-                {
-                    await vm.AutoSyncAllAsync();
-                }
-                finally
-                {
-                    _dispatcher.TryEnqueue(() =>
-                    {
-                        vm.IsImporting = false;
-                        vm.CurrentFile = "Done";
-                        if (!string.IsNullOrWhiteSpace(vm.Query))
-                            vm.Search();
+                await RunExclusiveAutoSync(vm); // first sync
 
-                    });
+                while (true)
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(5));
+                    await RunExclusiveAutoSync(vm);
                 }
             });
         }
+
+
+        private async Task RunExclusiveAutoSync(MainViewModel vm)
+        {
+            if (vm is null)
+                return;
+
+            // Skip if another sync is running
+            if (!vm.TryBeginSync())
+                return;
+
+            // Use the UI thread dispatcher stored in the Page field
+            _dispatcher.TryEnqueue(() =>
+            {
+                vm.IsImporting = true;
+                vm.CurrentFile = "Checking folders...";
+                vm.ProgressValue = 0;
+            });
+
+            try
+            {
+                await vm.AutoSyncAllAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("AUTO SYNC ERROR: " + ex);
+            }
+            finally
+            {
+                _dispatcher.TryEnqueue(() =>
+                {
+                    vm.IsImporting = false;
+                    vm.CurrentFile = "Done";
+
+                    if (!string.IsNullOrWhiteSpace(vm.Query))
+                        vm.Search();
+                });
+
+                vm.EndSync();
+            }
+        }
+
+
+
 
 
         private async void CopyImage_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
