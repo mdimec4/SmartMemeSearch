@@ -34,24 +34,40 @@ namespace SmartMemeSearch.Views
                 return;
 
             string path = Path.GetFullPath(folder.Path);
+            path = Path.TrimEndingDirectorySeparator(path);
 
             // Already tracked?
-            if (Folders.Contains(path))
+            if (Folders.Contains(path, StringComparer.OrdinalIgnoreCase))
                 return;
 
-            // If we already track a parent, skip adding child
-            if (Folders.Any(f => path.StartsWith(f + Path.DirectorySeparatorChar)))
-                return;
-
-            // If we are adding parent, drop its children
-            foreach (var f in Folders.ToList())
+            // 1) If path is inside an existing folder → reject
+            if (Folders.Any(existing =>
+                IsInside(path, existing)))
             {
-                if (f.StartsWith(path + Path.DirectorySeparatorChar))
-                    Folders.Remove(f);
+                // user selected child of an already-selected folder → skip
+                return;
             }
 
+            // 2) If existing folders are inside the new folder → remove them
+            foreach (var existing in Folders.ToList())
+            {
+                if (IsInside(existing, path))
+                    Folders.Remove(existing);
+            }
+
+            // 3) Add new folder
             Folders.Add(path);
         }
+
+        public static bool IsInside(string sub, string parent)
+        {
+            parent = Path.TrimEndingDirectorySeparator(parent);
+            sub = Path.TrimEndingDirectorySeparator(sub);
+
+            return sub.StartsWith(parent + Path.DirectorySeparatorChar,
+                                  StringComparison.OrdinalIgnoreCase);
+        }
+
 
         private void Remove_Click(object sender, RoutedEventArgs e)
         {

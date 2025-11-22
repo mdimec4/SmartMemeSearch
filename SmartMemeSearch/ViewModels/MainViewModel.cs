@@ -240,8 +240,7 @@ namespace SmartMemeSearch.ViewModels
                 foreach (var e in allEmbeds)
                 {
                     bool inside = newList.Any(root =>
-                        e.FilePath.StartsWith(root + Path.DirectorySeparatorChar,
-                                              StringComparison.OrdinalIgnoreCase));
+                        Views.FolderManagerDialog.IsInside(e.FilePath, root));
 
                     if (!inside)
                     {

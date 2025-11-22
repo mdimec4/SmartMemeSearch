@@ -107,7 +107,7 @@ namespace SmartMemeSearch.Services
         // ------------------------------------------------------------
         // REMOVE ENTRIES FOR DELETED FILES
         // ------------------------------------------------------------
-        public void RemoveMissingFiles(IEnumerable<string> existingFiles)
+        public void RemoveMissingFiles(IEnumerable<string> existingFiles, string rootFolder)
         {
             var set = new HashSet<string>(existingFiles, StringComparer.OrdinalIgnoreCase);
 
@@ -123,17 +123,28 @@ namespace SmartMemeSearch.Services
                 while (r.Read())
                 {
                     string path = r.GetString(0);
-                    if (!set.Contains(path))
+
+                    // MUST only remove files inside this folder
+                    if (path.StartsWith(rootFolder + Path.DirectorySeparatorChar,
+                                        StringComparison.OrdinalIgnoreCase)
+                        && !set.Contains(path))
+                    {
                         toDelete.Add(path);
+                    }
                 }
             }
 
             foreach (var path in toDelete)
             {
-                RemoveEmbedding(path);     // <- uses method below
+                var del = con.CreateCommand();
+                del.CommandText = "DELETE FROM embeddings WHERE file_path = $p;";
+                del.Parameters.AddWithValue("$p", path);
+                del.ExecuteNonQuery();
+
                 ThumbnailCache.Delete(path);
             }
         }
+
 
         // ------------------------------------------------------------
         // FOLDER MANAGEMENT
