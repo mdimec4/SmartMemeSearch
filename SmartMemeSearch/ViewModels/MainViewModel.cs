@@ -266,7 +266,7 @@ namespace SmartMemeSearch.ViewModels
             // -------------------------------
             // Start background sync (exclusive)
             // -------------------------------
-            if (!TryBeginSync())
+            if (!CheckSync())
             {
                 _dispatcher.TryEnqueue(() => IsImporting = false);
                 return;
@@ -288,6 +288,12 @@ namespace SmartMemeSearch.ViewModels
         {
             if (_syncRunning) return false;
             _syncRunning = true;
+            return true;
+        }
+
+        public bool CheckSync()
+        {
+            if (_syncRunning) return false;
             return true;
         }
 
