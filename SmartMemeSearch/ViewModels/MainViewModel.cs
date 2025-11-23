@@ -56,7 +56,7 @@ namespace SmartMemeSearch.ViewModels
         public bool IsPremium
         {
             get => _isPremium;
-            private set => SetProperty(ref _isPremium, value);
+            set => SetProperty(ref _isPremium, value);
         }
 
         public ObservableCollection<SearchResult> Results { get; } = new();

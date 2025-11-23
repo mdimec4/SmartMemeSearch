@@ -9,6 +9,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Contacts;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -17,24 +18,59 @@ using Windows.Storage.Streams;
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace SmartMemeSearch.Views
-{
+{ 
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : Page
     {
+ 
         private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
         private bool _autoSyncStarted = false;
 
         public MainPage()
         {
             InitializeComponent();
-            Loaded += MainPage_Loaded;
 
             StoreService.NotifyWindowReady();
         }
 
-        private async void MainPage_Loaded(object sender, RoutedEventArgs e)
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null)
+                return;
+
+            if (AdsView != null)
+            {
+
+#if MS_STORE_FREE_WITH_ADDS
+                    InitAdds();      
+#else
+                    vm.IsPremium = true;
+#endif
+            }
+
+            if (_autoSyncStarted)
+                return;
+
+            _autoSyncStarted = true;
+
+
+
+            _ = Task.Run(async () =>
+            {
+                await RunExclusiveAutoSync(vm); // first sync
+
+                while (true)
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(5));
+                    await RunExclusiveAutoSync(vm);
+                }
+            });
+        }
+
+        private async void InitAdds()
         {
             // A-Ads HTML
             string html = @"
@@ -43,6 +79,7 @@ namespace SmartMemeSearch.Views
 <body style='margin:0;padding:0;background:transparent;overflow:hidden;'>
 
 <iframe 
+    data-aa='2363747'
     src='https://acceptable.a-ads.com/2363747'
     style='border:0;width:100%;height:80px;background:transparent;'>
 </iframe>
@@ -59,37 +96,6 @@ namespace SmartMemeSearch.Views
             {
                 System.Diagnostics.Debug.WriteLine("ADS LOAD ERROR: " + ex);
             }
-        }
-
-
-        private void Page_Loaded(object sender, RoutedEventArgs e)
-        {
-            if (AdsView != null)
-            {
-                var bannerUri = new Uri("ms-appx:///Assets/ads/banner.html");
-                AdsView.Source = bannerUri;
-                AdsView.DefaultBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
-            }
-
-            if (_autoSyncStarted)
-                return;
-
-            _autoSyncStarted = true;
-
-            var vm = DataContext as MainViewModel;
-            if (vm == null)
-                return;
-
-            _ = Task.Run(async () =>
-            {
-                await RunExclusiveAutoSync(vm); // first sync
-
-                while (true)
-                {
-                    await Task.Delay(TimeSpan.FromMinutes(5));
-                    await RunExclusiveAutoSync(vm);
-                }
-            });
         }
 
 
