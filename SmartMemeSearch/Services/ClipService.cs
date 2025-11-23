@@ -26,7 +26,7 @@ namespace SmartMemeSearch.Services
         private static readonly SemaphoreSlim _gpuLock = new SemaphoreSlim(1, 1);
 
         // Strong prompt templates (OpenAI used 80, but these already help a LOT)
-        private static readonly string[] Templates = new[]
+        /*private static readonly string[] Templates = new[]
         {
             "a photo of a {}",
             "a close-up photo of a {}",
@@ -34,7 +34,7 @@ namespace SmartMemeSearch.Services
             "a jpeg photo of a {}",
             "a good photo of a {}",
             "a low-resolution photo of a {}"
-        };
+        };*/
 
         public ClipService()
         {
@@ -77,71 +77,79 @@ namespace SmartMemeSearch.Services
             return o;
         }
 
-        // TODO IMPORTANT: Pobably want to re-eable this
+        // templeate avreaging performs bad, so we disabe it
         // -----------------------------------------------------
         // TEXT → EMBEDDING (via prompt templates + averaging)
         // -----------------------------------------------------
-        public float[] GetTextEmbedding(string text)
-        {
-            List<float[]> embeddings = new();
+        /* public float[] GetTextEmbedding(string text)
+         {
+             List<float[]> embeddings = new();
 
-            foreach (var t in Templates)
-            {
-                string prompt = t.Replace("{}", text);
+             foreach (var t in Templates)
+             {
+                 string prompt = t.Replace("{}", text);
 
-                long[] ids = _tokenizer.EncodeToIds(prompt);
-                var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
+                 long[] ids = _tokenizer.EncodeToIds(prompt);
+                 var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
 
-                var inputs = new List<NamedOnnxValue>
+                 var inputs = new List<NamedOnnxValue>
+                  {
+                      NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
+                  };
+
+                 _gpuLock.Wait();
+                 try
                  {
-                     NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
-                 };
+                     using var results = _txt.Run(inputs);
+                     float[] raw = results.First().AsEnumerable<float>().ToArray();
+                     embeddings.Add(Normalize(raw));
+                 }
+                 finally
+                 {
+                     _gpuLock.Release();
+                 }
+             }
 
-                _gpuLock.Wait();
-                try
-                {
-                    using var results = _txt.Run(inputs);
-                    float[] raw = results.First().AsEnumerable<float>().ToArray();
-                    embeddings.Add(Normalize(raw));
-                }
-                finally
-                {
-                    _gpuLock.Release();
-                }
-            }
+                 // Average all prompt embeddings
+                 float[] avg = new float[embeddings[0].Length];
+                 foreach (var e in embeddings)
+                     for (int i = 0; i < avg.Length; i++)
+                         avg[i] += e[i];
 
-                // Average all prompt embeddings
-                float[] avg = new float[embeddings[0].Length];
-                foreach (var e in embeddings)
-                    for (int i = 0; i < avg.Length; i++)
-                        avg[i] += e[i];
+                 for (int i = 0; i < avg.Length; i++)
+                     avg[i] /= embeddings.Count;
 
-                for (int i = 0; i < avg.Length; i++)
-                    avg[i] /= embeddings.Count;
+                 return Normalize(avg);
+         }*/
 
-                return Normalize(avg);
-        }
 
-        /*
         public float[] GetTextEmbedding(string text)
         {
 
-                 long[] ids = _tokenizer.EncodeToIds(text);
-                var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
+            long[] ids = _tokenizer.EncodeToIds(text);
+            var inputIds = new DenseTensor<long>(ids, new[] { 1, ids.Length });
 
-                var inputs = new List<NamedOnnxValue>
+            var inputs = new List<NamedOnnxValue>
                 {
                     NamedOnnxValue.CreateFromTensor("input_ids", inputIds)
                 };
-
+            float[] raw;
+            _gpuLock.Wait();
+            try
+            {
                 using var results = _txt.Run(inputs);
-                float[] raw = results.First().AsEnumerable<float>().ToArray();
-                return Normalize(raw);
-        }*/
+                raw = results.First().AsEnumerable<float>().ToArray();
+            }
+            finally
+            {
+                _gpuLock.Release();
+            }
+            return Normalize(raw);
+        }
 
-            // -----------------------------------------------------
-            // IMAGE → EMBEDDING
-            // -----------------------------------------------------
+        // -----------------------------------------------------
+        // IMAGE → EMBEDDING
+        // -----------------------------------------------------
         public float[] GetImageEmbedding(byte[] bytes)
         {
             // Defensive: never let multiple CLIP image runs overlap
