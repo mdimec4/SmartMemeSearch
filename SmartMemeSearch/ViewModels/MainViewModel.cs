@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml.Controls;
 using SmartMemeSearch.Services;
 using System;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -53,9 +52,17 @@ namespace SmartMemeSearch.ViewModels
             set => SetProperty(ref _progressValue, value);
         }
 
+        private bool _isPremium;
+        public bool IsPremium
+        {
+            get => _isPremium;
+            private set => SetProperty(ref _isPremium, value);
+        }
+
         public ObservableCollection<SearchResult> Results { get; } = new();
 
         public ICommand ManageFoldersCommand { get; }
+        public ICommand RemoveAdsCommand { get; }
 
         private readonly ClipService _clip;
         private readonly OcrService _ocr;
@@ -63,6 +70,7 @@ namespace SmartMemeSearch.ViewModels
         private readonly ImporterService _importer;
         private readonly SearchService _search;
         private readonly AutoSyncService _autoSync;
+        private readonly StoreService _store;
 
         //private bool _isImportingFolder;
         private bool _syncRunning = false;
@@ -77,6 +85,8 @@ namespace SmartMemeSearch.ViewModels
             _search = new SearchService(_clip, _db);
             _autoSync = new AutoSyncService(_importer, _db);
 
+            _store = new StoreService();
+
             _debounceTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
             _debounceTimer.Interval = TimeSpan.FromMilliseconds(DebounceDelayMs);
             _debounceTimer.IsRepeating = false;
@@ -85,6 +95,10 @@ namespace SmartMemeSearch.ViewModels
             ThumbnailCache.Initialize(_dispatcher);
 
             ManageFoldersCommand = new RelayCommand(() => _ = ManageFoldersWrapper());
+            RemoveAdsCommand = new RelayCommand(async () => await RemoveAdsAsync());
+
+            // Kick off premium/license check (auto-restore)
+            _ = InitializePremiumAsync();
         }
 
         public void Search()
@@ -327,5 +341,40 @@ namespace SmartMemeSearch.ViewModels
                 p => _dispatcher.TryEnqueue(() => ProgressValue = p)
             );
         }
+
+
+        private async Task InitializePremiumAsync()
+        {
+            try
+            {
+                bool owned = await _store.IsPremiumAsync();
+                IsPremium = owned;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("InitializePremiumAsync error: " + ex);
+            }
+        }
+
+        private async Task RemoveAdsAsync()
+        {
+            if (IsPremium)
+                return; // already premium
+
+            bool success = await _store.PurchaseRemoveAdsAsync();
+            if (success)
+            {
+                IsPremium = true;
+                // Optional: you could also trigger a toast or status text here.
+                CurrentFile = "Thanks for supporting the app! Ads removed.";
+            }
+            else
+            {
+                // Optional: show feedback in UI
+                CurrentFile = "Purchase cancelled or failed.";
+            }
+        }
+
+
     }
 }

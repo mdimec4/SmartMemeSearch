@@ -28,10 +28,46 @@ namespace SmartMemeSearch.Views
         public MainPage()
         {
             InitializeComponent();
+            Loaded += MainPage_Loaded;
         }
+
+        private async void MainPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            // A-Ads HTML
+            string html = @"
+<!DOCTYPE html>
+<html>
+<body style='margin:0;padding:0;background:transparent;overflow:hidden;'>
+
+<iframe 
+    src='https://acceptable.a-ads.com/2363747'
+    style='border:0;width:100%;height:80px;background:transparent;'>
+</iframe>
+
+</body>
+</html>";
+
+            try
+            {
+                await AdsView.EnsureCoreWebView2Async();
+                AdsView.NavigateToString(html);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("ADS LOAD ERROR: " + ex);
+            }
+        }
+
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            if (AdsView != null)
+            {
+                var bannerUri = new Uri("ms-appx:///Assets/ads/banner.html");
+                AdsView.Source = bannerUri;
+                AdsView.DefaultBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
+            }
+
             if (_autoSyncStarted)
                 return;
 
