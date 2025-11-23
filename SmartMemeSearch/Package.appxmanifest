@@ -8,15 +8,15 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="2522db68-9360-4287-87ac-59ddee7a5993"
-    Publisher="CN=miha"
-    Version="1.0.0.0" />
+    Name="MDTools.SmartMemeSearch"
+    Publisher="CN=BC8DD125-A1B5-4A04-A8E3-26028FF73E40"
+    Version="1.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="2522db68-9360-4287-87ac-59ddee7a5993" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>SmartMemeSearch</DisplayName>
-    <PublisherDisplayName>miha</PublisherDisplayName>
+    <PublisherDisplayName>MDTools</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
