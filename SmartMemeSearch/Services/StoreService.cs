@@ -1,81 +1,57 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Services.Store;
+using WinRT.Interop;
 
 namespace SmartMemeSearch.Services
 {
     public class StoreService
     {
-        private readonly StoreContext _context;
+        private StoreContext? _context;
 
-        // TODO: replace this with your real Store ID for the add-on
-        // Example: "9NBLGGH12345"
-        private const string RemoveAdsStoreId = "9MVJSQGWRV2X";
+        public static bool WindowReady { get; private set; }
 
-        public StoreService()
+        public static void NotifyWindowReady() => WindowReady = true;
+
+        private void EnsureContext()
         {
+            if (_context != null)
+                return;
+
+            if (!StoreService.WindowReady)
+                throw new InvalidOperationException("Window not ready for Store API.");
+
             _context = StoreContext.GetDefault();
+
+
+            // SAFETY CHECK: ensure window exists
+            if (App.Window is null)
+                throw new InvalidOperationException("Main window not initialized yet.");
+
+            // get window handle
+            var hwnd = WindowNative.GetWindowHandle(App.Window);
+
+            // attach the StoreContext to window
+            InitializeWithWindow.Initialize(_context, hwnd);
         }
 
-        /// <summary>
-        /// Check if the user already owns the Remove Ads add-on.
-        /// This is called at startup (auto-restore).
-        /// </summary>
-        public async Task<bool> IsPremiumAsync()
-        {
-            try
-            {
-                StoreAppLicense license = await _context.GetAppLicenseAsync();
-
-                if (license == null)
-                    return false;
-
-                if (license.AddOnLicenses != null &&
-                    license.AddOnLicenses.TryGetValue(RemoveAdsStoreId, out StoreLicense addOn))
-                {
-                    return addOn.IsActive;
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("IsPremiumAsync error: " + ex);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Try to purchase the Remove Ads add-on.
-        /// Returns true if purchase succeeded or was already purchased.
-        /// </summary>
         public async Task<bool> PurchaseRemoveAdsAsync()
         {
-            try
-            {
-                StorePurchaseResult result = await _context.RequestPurchaseAsync(RemoveAdsStoreId);
+            EnsureContext();
 
-                Debug.WriteLine("Purchase status: " + result.Status);
+            StorePurchaseResult result =
+                await _context?.RequestPurchaseAsync("remove_ads");
 
-                switch (result.Status)
-                {
-                    case StorePurchaseStatus.Succeeded:
-                    case StorePurchaseStatus.AlreadyPurchased:
-                        return true;
+            return result.Status == StorePurchaseStatus.Succeeded;
+        }
 
-                    case StorePurchaseStatus.NotPurchased:
-                    case StorePurchaseStatus.NetworkError:
-                    case StorePurchaseStatus.ServerError:
-                    default:
-                        return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("PurchaseRemoveAdsAsync error: " + ex);
-                return false;
-            }
+        public async Task<bool> IsPremiumAsync()
+        {
+            EnsureContext();
+
+            StoreAppLicense lic = await _context?.GetAppLicenseAsync();
+            return lic.AddOnLicenses.TryGetValue("remove_ads", out var addon)
+                   && addon.IsActive;
         }
     }
 }

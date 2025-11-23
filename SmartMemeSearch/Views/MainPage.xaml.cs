@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using SmartMemeSearch;
+using SmartMemeSearch.Services;
 using SmartMemeSearch.ViewModels;
 using System;
 using System.Diagnostics;
@@ -29,6 +30,8 @@ namespace SmartMemeSearch.Views
         {
             InitializeComponent();
             Loaded += MainPage_Loaded;
+
+            StoreService.NotifyWindowReady();
         }
 
         private async void MainPage_Loaded(object sender, RoutedEventArgs e)
