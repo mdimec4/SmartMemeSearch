@@ -151,6 +151,13 @@ namespace SmartMemeSearch.Wpf
         }
 
 
+        private void ManageFolders_Click(object sender, MouseButtonEventArgs a)
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null)
+                return;
+            vm.ManageFoldersWrapper();
+        }
 
         private void ResultItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
@@ -293,7 +300,9 @@ namespace SmartMemeSearch.Wpf
             }
             args.Handled = true;
         }
-
+        
+        // TODO reintroduce Keyboard functionality
+        /*
         private void CopyPath_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             if (ResultsList.SelectedItem is SearchResult r)
@@ -349,6 +358,6 @@ namespace SmartMemeSearch.Wpf
 
                 e.Handled = true;
             }
-        }
+        }*/
     }
 }

@@ -4,10 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
+using System.Windows.Media.Imaging;
 
 namespace SmartMemeSearch.Wpf.Services
 {
@@ -217,7 +214,7 @@ namespace SmartMemeSearch.Wpf.Services
             }
         }
 
-        public static BitmapImage? TryGetMemory(string filePath)
+        public static System.Windows.Media.Imaging.BitmapImage? TryGetMemory(string filePath)
         {
             // No lock needed – ConcurrentDictionary is thread-safe for reads
             return _memoryCache.TryGetValue(filePath, out var bmp)
@@ -230,7 +227,7 @@ namespace SmartMemeSearch.Wpf.Services
     // Small helper to await DispatcherQueue callbacks
     public static class DispatcherQueueExtensions
     {
-        public static Task EnqueueAsync(this DispatcherQueue d, Func<Task> action)
+        public static Task EnqueueAsync(this Dispatcher d, Func<Task> action)
         {
             var tcs = new TaskCompletionSource<object?>();
 

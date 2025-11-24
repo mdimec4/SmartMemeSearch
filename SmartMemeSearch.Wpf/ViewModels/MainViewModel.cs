@@ -1,10 +1,6 @@
-﻿using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml.Controls;
-using SmartMemeSearch.Wpf.Services;
-using System;
+﻿using SmartMemeSearch.Wpf.Services;
+using SmartMemeSearch.Wpf.Views;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -18,6 +14,9 @@ namespace SmartMemeSearch.Wpf.ViewModels
         private const int DebounceDelayMs = 200;
 
         private string _query = string.Empty;
+
+        public ObservableCollection<SearchResult> Results { get; } = new();
+
         public string Query
         {
             get => _query;
@@ -60,7 +59,12 @@ namespace SmartMemeSearch.Wpf.ViewModels
             set => SetProperty(ref _isPremium, value);
         }
 
-        public ObservableCollection<SearchResult> Results { get; } = new();
+        private string _searchText;
+        public string SearchText
+        {
+            get => _searchText;
+            set => SetProperty(ref _searchText, value);
+        }
 
         public ICommand ManageFoldersCommand { get; }
         public ICommand RemoveAdsCommand { get; }
@@ -107,12 +111,12 @@ namespace SmartMemeSearch.Wpf.ViewModels
             var results = _search.Search(Query);
 
             // Clear collection on UI thread
-            _dispatcher.TryEnqueue(() => Results.Clear());
+            _dispatcher.Invoke(() => Results.Clear());
 
             foreach (var r in results)
             {
                 // Add items on UI thread
-                _dispatcher.TryEnqueue(() =>
+                _dispatcher.Invoke(() =>
                 {
                     Results.Add(r);
                 });
@@ -194,7 +198,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
             }
             finally
             {
-                _dispatcher.TryEnqueue(() =>
+                _dispatcher.Invoke(() =>
                 {
                     CurrentFile = "Done";
                     IsImporting = false;
@@ -204,24 +208,17 @@ namespace SmartMemeSearch.Wpf.ViewModels
             }
         }
 
-        private async Task ManageFoldersWrapper()
-        {
-            await Task.Yield();   // ← forces continuation off UI-thread-pre-block
-            await ManageFolders();
-        }
-
-        private async Task ManageFolders()
+        public void ManageFolders()
         {
             var existing = _db.GetFolders().ToList();
 
-            var dialog = new Views.FolderManagerDialog(existing)
-            {
-                XamlRoot = App.Window?.Content.XamlRoot
-            };
+            var dialog = new FolderManagerDialog(existing);
+            dialog.Owner = App.Current.MainWindow;
 
-            var result = await dialog.ShowAsync();
-            if (result != ContentDialogResult.Primary)
+            if (!dialog.ShowDialog() != true)
+            {
                 return;
+            }
 
             var newList = dialog.Folders.ToList();
 
@@ -231,17 +228,15 @@ namespace SmartMemeSearch.Wpf.ViewModels
             // -------------------------------
             // Show UI status
             // -------------------------------
-            _dispatcher.TryEnqueue(() =>
-            {
-                IsImporting = true;
-                CurrentFile = "Removing deleted files...";
-                ProgressValue = 0;
-            });
+
+            IsImporting = true;
+            CurrentFile = "Removing deleted files...";
+            ProgressValue = 0;
 
             // -------------------------------
             // Move ALL heavy lifting off UI thread
             // -------------------------------
-            await Task.Run(() =>
+            _ = Task.Run(async () =>
             {
                 // read all embeddings OFF UI THREAD
                 var allEmbeds = _db.GetAllEmbeddings().ToList();
@@ -275,25 +270,25 @@ namespace SmartMemeSearch.Wpf.ViewModels
                 }
 
                 tr.Commit();
+
+                // -------------------------------
+                // Start background sync (exclusive)
+                // -------------------------------
+                if (!CheckSync())
+                {
+                    _dispatcher.Invoke(() => IsImporting = false);
+                    return;
+                }
+
+                _dispatcher.Invoke(() =>
+                {
+                    CurrentFile = "Syncing folders...";
+                    ProgressValue = 0;
+                });
+
+                // Use the existing helper
+               await RunExclusiveAutoSyncFromVM();
             });
-
-            // -------------------------------
-            // Start background sync (exclusive)
-            // -------------------------------
-            if (!CheckSync())
-            {
-                _dispatcher.Invoke(() => IsImporting = false);
-                return;
-            }
-
-            _dispatcher.Invoke(() =>
-            {
-                CurrentFile = "Syncing folders...";
-                ProgressValue = 0;
-            });
-
-            // Use the existing helper
-            _ = Task.Run(async () => await RunExclusiveAutoSyncFromVM());
         }
 
 

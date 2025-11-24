@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SmartMemeSearch.Wpf.ViewModels"
         xmlns:conv="clr-namespace:SmartMemeSearch.Wpf.Converters"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2"
         Title="Smart Meme Search"
         Width="1200"
         Height="800"
@@ -35,12 +36,9 @@
                      Margin="0,0,8,0"
                      VerticalAlignment="Center"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-            <Button Content="Search"
+            <Button Content="Manage Meme Folders"
                     Width="80"
-                    Click="SearchButton_Click"/>
-            <CheckBox Content="Use OCR"
-                      Margin="16,0,0,0"
-                      IsChecked="{Binding UseOcr}"/>
+                    Click="ManageFolders_Click"/>
         </StackPanel>
 
         <!-- Main content -->
@@ -64,14 +62,14 @@
                                     BorderBrush="Gray"
                                     BorderThickness="1"
                                     CornerRadius="4">
+                                <Border.ContextMenu>
+                                    <StaticResource ResourceKey="MemeContextMenu" />
+                                </Border.ContextMenu>
                                 <Grid>
                                     <Image Source="{Binding ThumbnailPath}"
                                            Width="200"
                                            Height="200"
                                            Stretch="UniformToFill"/>
-                                    <Border.ContextMenu>
-                                        <StaticResource ResourceKey="MemeContextMenu" />
-                                    </Border.ContextMenu>
                                 </Grid>
                             </Border>
                         </DataTemplate>

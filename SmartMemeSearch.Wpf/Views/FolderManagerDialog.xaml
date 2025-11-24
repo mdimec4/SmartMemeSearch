@@ -1,30 +1,40 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ContentDialog
-    x:Class="SmartMemeSearch.Wpf.Views.FolderManagerDialog"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Manage Meme Folders"
-    PrimaryButtonText="Save"
-    SecondaryButtonText="Cancel"
-    DefaultButton="Primary">
+<Window x:Class="SmartMemeSearch.Wpf.Views.FolderManagerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Manage Meme Folders"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
 
-    <StackPanel Spacing="12">
+    <StackPanel Margin="20" VerticalAlignment="Top">
 
-        <ListView ItemsSource="{x:Bind Folders}">
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="x:String">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="{x:Bind}" Width="340" />
+        <ListBox x:Name="FolderList"
+                 ItemsSource="{Binding Folders}"
+                 Width="400"
+                 Margin="0,0,0,15">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <DockPanel>
+                        <TextBlock Text="{Binding}" Width="300"/>
                         <Button Content="Remove"
-                                Click="Remove_Click"
-                                Tag="{x:Bind}" />
-                    </StackPanel>
+                                DockPanel.Dock="Right"
+                                Padding="4,2"
+                                Tag="{Binding}"
+                                Click="Remove_Click"/>
+                    </DockPanel>
                 </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
-        <Button Content="Add Folder"
+        <Button Content="Add Folder" Width="120" Margin="0,0,0,10"
                 Click="Add_Click"/>
-    </StackPanel>
-</ContentDialog>
 
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Width="80" Margin="0,0,10,0"
+                    Click="Cancel_Click"/>
+            <Button Content="OK" Width="80"
+                    Click="Ok_Click"/>
+        </StackPanel>
+
+    </StackPanel>
+</Window>

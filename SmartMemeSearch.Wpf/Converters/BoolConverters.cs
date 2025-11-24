@@ -1,28 +1,25 @@
-﻿
-using System;
+﻿using System;
+using System.Globalization;
 using System.Windows;
+using System.Windows.Data;
 
 namespace SmartMemeSearch.Wpf.Converters
 {
     public class BoolToVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type t, object p, string l)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
             => (value is bool b && b) ? Visibility.Visible : Visibility.Collapsed;
 
-        public object ConvertBack(object v, Type t, object p, string l)
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
 
-    public interface IValueConverter
+    public class BoolToVisibilityInverseConverter : IValueConverter
     {
-    }
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => (value is bool b && b) ? Visibility.Collapsed : Visibility.Visible;
 
-    public class BoolToIndeterminateConverter : IValueConverter
-    {
-        public object Convert(object value, Type t, object p, string l)
-            => value is bool b && b;
-
-        public object ConvertBack(object v, Type t, object p, string l)
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
 }

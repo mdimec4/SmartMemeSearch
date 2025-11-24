@@ -1,61 +1,48 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
+using System.Windows;
+using System.Windows.Forms;
 
 namespace SmartMemeSearch.Wpf.Views
 {
-    public sealed partial class FolderManagerDialog : ContentDialog
+    public partial class FolderManagerDialog : Window
     {
-        // This is what {x:Bind Folders} uses
         public ObservableCollection<string> Folders { get; }
 
-        public FolderManagerDialog(IEnumerable<string> existingFolders)
+        public FolderManagerDialog(IEnumerable<string> existing)
         {
-            this.InitializeComponent();
-            Folders = new ObservableCollection<string>(existingFolders);
+            InitializeComponent();
+            Folders = new ObservableCollection<string>(existing);
+            DataContext = this;
         }
 
-        private async void Add_Click(object sender, RoutedEventArgs e)
+        private void Add_Click(object sender, RoutedEventArgs e)
         {
-            var picker = new FolderPicker();
-            picker.FileTypeFilter.Add("*");
+            using var dlg = new FolderBrowserDialog();
+            var result = dlg.ShowDialog();
 
-            var hwnd = WindowNative.GetWindowHandle(App.Current.MainWindow);
-            InitializeWithWindow.Initialize(picker, hwnd);
-
-            var folder = await picker.PickSingleFolderAsync();
-            if (folder == null)
+            if (result != System.Windows.Forms.DialogResult.OK)
                 return;
 
-            string path = Path.GetFullPath(folder.Path);
+            var path = dlg.SelectedPath;
+
             path = Path.TrimEndingDirectorySeparator(path);
 
-            // Already tracked?
             if (Folders.Contains(path, StringComparer.OrdinalIgnoreCase))
                 return;
 
-            // 1) If path is inside an existing folder → reject
-            if (Folders.Any(existing =>
-                IsInside(path, existing)))
-            {
-                // user selected child of an already-selected folder → skip
+            // reject if subfolder of existing
+            if (Folders.Any(existing => IsInside(path, existing)))
                 return;
-            }
 
-            // 2) If existing folders are inside the new folder → remove them
-            foreach (var existing in Folders.ToList())
+            // remove if existing is inside new
+            foreach (var ex in Folders.ToList())
             {
-                if (IsInside(existing, path))
-                    Folders.Remove(existing);
+                if (IsInside(ex, path))
+                    Folders.Remove(ex);
             }
 
-            // 3) Add new folder
             Folders.Add(path);
         }
 
@@ -68,11 +55,25 @@ namespace SmartMemeSearch.Wpf.Views
                                   StringComparison.OrdinalIgnoreCase);
         }
 
-
         private void Remove_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is string path)
-                Folders.Remove(path);
+            if (sender is System.Windows.Controls.Button btn &&
+                btn.Tag is string folder)
+            {
+                Folders.Remove(folder);
+            }
+        }
+
+        private void Ok_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = true;
+            Close();
+        }
+
+        private void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
         }
     }
 }
