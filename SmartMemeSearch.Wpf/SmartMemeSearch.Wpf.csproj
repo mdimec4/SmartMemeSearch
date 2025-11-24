@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
+	<ApplicationIcon>Assets\smile.ico</ApplicationIcon>
   </PropertyGroup>
 
 	<ItemGroup>

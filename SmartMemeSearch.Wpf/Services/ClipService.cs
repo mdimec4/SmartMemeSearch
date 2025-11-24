@@ -56,7 +56,6 @@ namespace SmartMemeSearch.Wpf.Services
             {
                 Debug.WriteLine("DirectML not available, falling back to CPU");
             }
-            opts.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING;
 
             _img = new InferenceSession(imageModelPath, opts);
             _txt = new InferenceSession(textModelPath, opts);
