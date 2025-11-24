@@ -4,6 +4,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="SmartMemeSearch.Wpf/SmartMemeSearch.Wpf.csproj" Id="2b776460-42c5-47c0-a739-1610c4472f3d" />
   <Project Path="SmartMemeSearch/SmartMemeSearch.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
