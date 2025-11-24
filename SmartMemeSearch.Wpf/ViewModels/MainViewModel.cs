@@ -10,7 +10,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
     public class MainViewModel : BindableBase
     {
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
-        private readonly DispatcherQueueTimer _debounceTimer;
+        private readonly DispatcherTimer _debounceTimer;
         private const int DebounceDelayMs = 200;
 
         private string _query = string.Empty;
@@ -59,16 +59,6 @@ namespace SmartMemeSearch.Wpf.ViewModels
             set => SetProperty(ref _isPremium, value);
         }
 
-        private string _searchText;
-        public string SearchText
-        {
-            get => _searchText;
-            set => SetProperty(ref _searchText, value);
-        }
-
-        public ICommand ManageFoldersCommand { get; }
-        public ICommand RemoveAdsCommand { get; }
-
         private readonly ClipService _clip;
         private readonly OcrService _ocr;
         private readonly DatabaseService _db;
@@ -90,17 +80,17 @@ namespace SmartMemeSearch.Wpf.ViewModels
             _search = new SearchService(_clip, _db);
             _autoSync = new AutoSyncService(_importer, _db);
 
-            _store = new StoreService(App.Current.MainWindow);
+            _store = new StoreService(/*App.Current.MainWindow*/);
 
-            _debounceTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+            _debounceTimer = new DispatcherTimer();
             _debounceTimer.Interval = TimeSpan.FromMilliseconds(DebounceDelayMs);
-            _debounceTimer.IsRepeating = false;
-            _debounceTimer.Tick += (s, e) => Search();
+            _debounceTimer.Tick += (s, e) =>
+            {
+                _debounceTimer.Stop();
+                Search();
+            };
 
             ThumbnailCache.Initialize(_dispatcher);
-
-            ManageFoldersCommand = new RelayCommand(() => _ = ManageFoldersWrapper());
-            RemoveAdsCommand = new RelayCommand(async () => await RemoveAdsAsync());
 
             // Kick off premium/license check (auto-restore)
             _ = InitializePremiumAsync();
@@ -352,7 +342,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
             }
         }
 
-        private async Task RemoveAdsAsync()
+        public async Task RemoveAdsAsync()
         {
             if (IsPremium)
                 return; // already premium

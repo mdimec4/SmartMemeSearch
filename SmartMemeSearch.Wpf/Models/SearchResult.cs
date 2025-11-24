@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
+using System.Windows.Media.Imaging;
 
-namespace SmartMemeSearch
+namespace SmartMemeSearch.Wpf
 {
     public class SearchResult : BindableBase
     {
@@ -11,7 +12,7 @@ namespace SmartMemeSearch
         public string OcrPreview { get; set; } = string.Empty;
 
         // Thumbnail image (loaded asynchronously)
-        private Microsoft.UI.Xaml.Media.Imaging.BitmapImage? _thumbnail;
-        public Microsoft.UI.Xaml.Media.Imaging.BitmapImage? Thumbnail { get => _thumbnail; set=> SetProperty(ref _thumbnail, value); }
+        private BitmapImage? _thumbnail;
+        public BitmapImage? Thumbnail { get => _thumbnail; set=> SetProperty(ref _thumbnail, value); }
     }
 }

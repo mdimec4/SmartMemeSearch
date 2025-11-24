@@ -16,6 +16,8 @@ namespace SmartMemeSearch.Wpf.Converters
 
     public class BoolToVisibilityInverseConverter : IValueConverter
     {
+        // true  -> Collapsed
+        // false -> Visible
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
             => (value is bool b && b) ? Visibility.Collapsed : Visibility.Visible;
 

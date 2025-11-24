@@ -6,15 +6,16 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+	<UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
 	<ItemGroup>
 		<!-- SQLite for DB in %LOCALAPPDATA% -->
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
-		<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.2" />
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.23.0" />
 		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.23.2" />
-		<!-- WebView2 for ads -->
 		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3595.46" />
+		<!-- WebView2 for ads -->
 		<PackageReference Include="Tesseract" Version="5.2.0" />
 	</ItemGroup>
 

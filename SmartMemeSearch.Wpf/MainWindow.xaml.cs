@@ -15,6 +15,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Clipboard = System.Windows.Clipboard;
+using ContextMenu = System.Windows.Controls.ContextMenu;
+using MenuItem = System.Windows.Controls.MenuItem;
 
 namespace SmartMemeSearch.Wpf
 {
@@ -140,26 +143,48 @@ namespace SmartMemeSearch.Wpf
 
         private static SearchResult? GetResultFromSender(object sender)
         {
-            if (sender is FrameworkElement fe)
-                return fe.DataContext as SearchResult;
+            // If the event comes from an element inside the DataTemplate
+            if (sender is FrameworkElement fe && fe.DataContext is SearchResult sr1)
+                return sr1;
 
-            if (sender is MenuFlyoutItem mi)
-                return (SearchResult?)(mi.DataContext as SearchResult
-                       ?? (mi.DataContext = (mi.Tag as SearchResult)));
+            // If a WPF MenuItem triggered the event
+            if (sender is MenuItem mi)
+            {
+                if (mi.DataContext is SearchResult sr2)
+                    return sr2;
+
+                // When used with ContextMenu, DataContext may be missing—
+                // we can get the item from PlacementTarget.
+                if (mi.Parent is ContextMenu cm &&
+                    cm.PlacementTarget is FrameworkElement fe2 &&
+                    fe2.DataContext is SearchResult sr3)
+                    return sr3;
+            }
 
             return null;
         }
 
 
-        private void ManageFolders_Click(object sender, MouseButtonEventArgs a)
+
+        private void ManageFolders_Click(object sender, RoutedEventArgs e)
         {
             var vm = DataContext as MainViewModel;
             if (vm == null)
                 return;
-            vm.ManageFoldersWrapper();
+           vm.ManageFolders();
         }
 
-        private void ResultItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        private void RemoveAdds_Click(object sender, RoutedEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null)
+                return;
+            _ = vm.RemoveAdsAsync();
+        }
+
+        // TODO
+        /*
+        private void ResultItem_DoubleTapped(object sender, MouseDoubleClickEventArgs e)
         {
             var r = GetResultFromSender(sender);
             if (r == null || string.IsNullOrEmpty(r.FilePath))
@@ -167,6 +192,7 @@ namespace SmartMemeSearch.Wpf
 
             OpenFileWithShell(r.FilePath);
         }
+        */
 
         private void OpenItem_Click(object sender, RoutedEventArgs e)
         {
@@ -272,6 +298,9 @@ namespace SmartMemeSearch.Wpf
                 Debug.WriteLine("Open file failed: " + ex);
             }
         }
+
+        // TODO reintroduce Keyboard functionality
+        /*
         private void Open_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             if (ResultsList.SelectedItem is SearchResult r)
@@ -301,8 +330,7 @@ namespace SmartMemeSearch.Wpf
             args.Handled = true;
         }
         
-        // TODO reintroduce Keyboard functionality
-        /*
+
         private void CopyPath_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             if (ResultsList.SelectedItem is SearchResult r)

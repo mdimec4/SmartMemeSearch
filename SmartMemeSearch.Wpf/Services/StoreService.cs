@@ -2,10 +2,21 @@
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
-using Windows.Services.Store;
+//using Windows.Services.Store;
 
 namespace SmartMemeSearch.Wpf.Services
 {
+
+    public class StoreService
+    {
+        public Task<bool> PurchaseRemoveAdsAsync()
+            => Task.FromResult(false);
+
+        public Task<bool> IsPremiumAsync()
+            => Task.FromResult(false);
+    }
+
+    /*
     public class StoreService
     {
         private StoreContext? _context;
@@ -72,5 +83,5 @@ namespace SmartMemeSearch.Wpf.Services
             return lic.AddOnLicenses.TryGetValue("remove_ads", out var addon)
                    && addon.IsActive;
         }
-    }
+    }*/
 }

@@ -43,9 +43,19 @@ namespace SmartMemeSearch.Wpf.Services
             string imageModelPath = Path.Combine(baseDir, "Assets", "clip_image.onnx");
             string textModelPath = Path.Combine(baseDir, "Assets", "clip_text.onnx");
             string tokenizerPath = Path.Combine(baseDir, "Assets", "tokenizer.json");
-
+            
             var opts = new SessionOptions();
-            opts.AppendExecutionProvider_DML();   // <--- GPU
+            opts.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING;
+
+            try
+            {
+                opts.AppendExecutionProvider_DML();
+                Debug.WriteLine("Using DirectML GPU provider");
+            }
+            catch
+            {
+                Debug.WriteLine("DirectML not available, falling back to CPU");
+            }
             opts.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING;
 
             _img = new InferenceSession(imageModelPath, opts);
