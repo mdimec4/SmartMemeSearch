@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+
+		<UseWinUI>true</UseWinUI>
+		<WindowsPackageType>None</WindowsPackageType>
+		<Nullable>enable</Nullable>
+
+		<!-- REQUIRED: prevents XAML compiler from generating Program/Main -->
+		<DisableXamlGeneratedMain>true</DisableXamlGeneratedMain>
+
+		<!-- Only x64 supported -->
+		<Platforms>x64</Platforms>
+
+		<!-- Enables XAML build targets -->
+		<UseWpf>false</UseWpf>
+		<UseWindowsForms>false</UseWindowsForms>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+	</ItemGroup>
+</Project>

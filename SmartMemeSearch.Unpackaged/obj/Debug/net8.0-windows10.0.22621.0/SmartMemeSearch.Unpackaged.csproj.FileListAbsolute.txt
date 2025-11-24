@@ -1,0 +1,6 @@
+C:\git\SmartMemeSearch\SmartMemeSearch.Unpackaged\obj\Debug\net8.0-windows10.0.22621.0\SmartMemeSearch.Unpackaged.csproj.AssemblyReference.cache
+C:\git\SmartMemeSearch\SmartMemeSearch.Unpackaged\obj\Debug\net8.0-windows10.0.22621.0\SmartMemeSearch.Unpackaged.GeneratedMSBuildEditorConfig.editorconfig
+C:\git\SmartMemeSearch\SmartMemeSearch.Unpackaged\obj\Debug\net8.0-windows10.0.22621.0\SmartMemeSearch.Unpackaged.AssemblyInfoInputs.cache
+C:\git\SmartMemeSearch\SmartMemeSearch.Unpackaged\obj\Debug\net8.0-windows10.0.22621.0\SmartMemeSearch.Unpackaged.AssemblyInfo.cs
+C:\git\SmartMemeSearch\SmartMemeSearch.Unpackaged\obj\Debug\net8.0-windows10.0.22621.0\SmartMemeSearch.Unpackaged.csproj.CoreCompileInputs.cache
+C:\git\SmartMemeSearch\SmartMemeSearch.Unpackaged\obj\Debug\net8.0-windows10.0.22621.0\SmartMemeSearch.Unpackaged.sourcelink.json

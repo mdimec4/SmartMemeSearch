@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "WinUITestUnpackaged": {
+      "commandName": "Executable",
+      "executablePath": "$(TargetPath)",
+      "workingDirectory": "$(ProjectDir)",
+      "nativeDebugging": false
+    }
+  }
+}

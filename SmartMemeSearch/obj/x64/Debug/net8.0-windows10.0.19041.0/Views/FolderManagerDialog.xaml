@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog x:ConnectionId='1'
+    x:Class="SmartMemeSearch.Views.FolderManagerDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Manage Meme Folders"
+    PrimaryButtonText="Save"
+    SecondaryButtonText="Cancel"
+    DefaultButton="Primary">
+
+    <StackPanel Spacing="12">
+
+        <ListView x:ConnectionId='2'                               >
+            <ListView.ItemTemplate>
+                <DataTemplate                      >
+                    <StackPanel x:ConnectionId='5' Orientation="Horizontal" Spacing="10">
+                        <TextBlock x:ConnectionId='6'                 Width="340" />
+                        <Button x:ConnectionId='7' Content="Remove"
+                                                    
+                                               />
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <Button x:ConnectionId='3' Content="Add Folder"
+                                 />
+    </StackPanel>
+</ContentDialog>
+
+

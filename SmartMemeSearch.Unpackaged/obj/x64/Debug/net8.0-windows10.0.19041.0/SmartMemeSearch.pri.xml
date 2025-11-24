@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PriInfo>
+	<ResourceMap name="SmartMemeSearch" version="1.0" primary="true">
+		<Qualifiers>
+			<AlternateForm>UNPLATED</AlternateForm>
+			<Scale>200</Scale>
+			<TargetSize>24</TargetSize>
+		</Qualifiers>
+		<ResourceMapSubtree name="Files">
+			<ResourceMapSubtree name="SmartMemeSearch">
+				<NamedResource name="App.xbf" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/App.xbf">
+					<Candidate type="Path">
+						<Value>SmartMemeSearch\App.xbf</Value>
+					</Candidate>
+				</NamedResource>
+				<NamedResource name="MainWindow.xbf" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/MainWindow.xbf">
+					<Candidate type="Path">
+						<Value>SmartMemeSearch\MainWindow.xbf</Value>
+					</Candidate>
+				</NamedResource>
+				<ResourceMapSubtree name="Assets">
+					<NamedResource name="cat.jpg" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/cat.jpg">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Assets\cat.jpg</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="clip_image.onnx" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/clip_image.onnx">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Assets\clip_image.onnx</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="clip_text.onnx" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/clip_text.onnx">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Assets\clip_text.onnx</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="LockScreenLogo.png" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/LockScreenLogo.png">
+						<Candidate qualifiers="Scale-200" isDefault="true" type="Path">
+							<Value>SmartMemeSearch\Assets\LockScreenLogo.scale-200.png</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="smile.ico" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/smile.ico">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Assets\smile.ico</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="smile.png" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/smile.png">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Assets\smile.png</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="SplashScreen.png" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/SplashScreen.png">
+						<Candidate qualifiers="Scale-200" isDefault="true" type="Path">
+							<Value>SmartMemeSearch\Assets\SplashScreen.scale-200.png</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="Square150x150Logo.png" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/Square150x150Logo.png">
+						<Candidate qualifiers="Scale-200" isDefault="true" type="Path">
+							<Value>SmartMemeSearch\Assets\Square150x150Logo.scale-200.png</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="Square44x44Logo.png" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/Square44x44Logo.png">
+						<Candidate qualifiers="TargetSize-24, AlternateForm-UNPLATED" type="Path">
+							<Value>SmartMemeSearch\Assets\Square44x44Logo.targetsize-24_altform-unplated.png</Value>
+						</Candidate>
+						<Candidate qualifiers="Scale-200" isDefault="true" type="Path">
+							<Value>SmartMemeSearch\Assets\Square44x44Logo.scale-200.png</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="StoreLogo.png" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/StoreLogo.png">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Assets\StoreLogo.png</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="tokenizer.json" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/tokenizer.json">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Assets\tokenizer.json</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="Wide310x150Logo.png" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Assets/Wide310x150Logo.png">
+						<Candidate qualifiers="Scale-200" isDefault="true" type="Path">
+							<Value>SmartMemeSearch\Assets\Wide310x150Logo.scale-200.png</Value>
+						</Candidate>
+					</NamedResource>
+				</ResourceMapSubtree>
+				<ResourceMapSubtree name="Views">
+					<NamedResource name="FolderManagerDialog.xbf" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Views/FolderManagerDialog.xbf">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Views\FolderManagerDialog.xbf</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="MainPage.xbf" uri="ms-resource://SmartMemeSearch/Files/SmartMemeSearch/Views/MainPage.xbf">
+						<Candidate type="Path">
+							<Value>SmartMemeSearch\Views\MainPage.xbf</Value>
+						</Candidate>
+					</NamedResource>
+				</ResourceMapSubtree>
+			</ResourceMapSubtree>
+		</ResourceMapSubtree>
+	</ResourceMap>
+</PriInfo>

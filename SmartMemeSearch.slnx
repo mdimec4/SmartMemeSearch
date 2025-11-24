@@ -4,10 +4,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="SmartMemeSearch.Packaged/SmartMemeSearch.Packaged.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
-    <Deploy />
-  </Project>
+  <Project Path="SmartMemeSearch.Unpackaged/SmartMemeSearch.Unpackaged.csproj" Id="bfcb5720-263e-4c73-85a1-c67b4cdcba17" />
+  <Project Path="SmartMemeSearch/SmartMemeSearch.csproj" Id="d0762e87-f3ed-4b9d-a749-977f90901ee7" />
+  <Project Path="WinUITestUnpackaged/WinUITestUnpackaged.csproj" Id="33ebf387-230b-40df-afe9-bec4acbf98bc" />
 </Solution>
