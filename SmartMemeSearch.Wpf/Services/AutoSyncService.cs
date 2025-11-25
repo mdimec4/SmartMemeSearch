@@ -32,9 +32,9 @@ namespace SmartMemeSearch.Wpf.Services
         }
 
         private async Task SyncFolderAsync(
-    string folder,
-    Action<string> onFile,
-    Action<double> onProgress)
+            string folder,
+            Action<string> onFile,
+            Action<double> onProgress)
         {
             var allFiles = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
 
@@ -75,6 +75,7 @@ namespace SmartMemeSearch.Wpf.Services
                     continue;
 
                 await _importer.ImportSingleAsync(img);
+                await ThumbnailCache.PreGenerateAsync(img);
             }
 
             onFile("Done");
