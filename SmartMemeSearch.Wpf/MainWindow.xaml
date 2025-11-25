@@ -59,7 +59,8 @@
                 BorderThickness="0"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 HorizontalContentAlignment="Stretch"
-                KeyDown="ResultsList_KeyDown">
+                KeyDown="ResultsList_KeyDown"
+                MouseDoubleClick="ResultsList_MouseDoubleClick">
 
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>

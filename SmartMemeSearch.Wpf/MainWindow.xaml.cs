@@ -303,12 +303,79 @@ namespace SmartMemeSearch.Wpf
 
         private void ResultsList_KeyDown(object sender, KeyEventArgs e)
         {
+            var r = GetSelected();
+            if (r == null) return;
+
+            // --- Ctrl + L → Open folder ---
+            if (e.Key == Key.L && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                if (File.Exists(r.FilePath))
+                {
+                    Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{r.FilePath}\"")
+                    {
+                        UseShellExecute = true
+                    });
+                }
+
+                e.Handled = true;
+                return;
+            }
+
+            // --- Ctrl + C → Copy file ---
+            if (e.Key == Key.C && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control &&
+                (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.None)
+            {
+                if (File.Exists(r.FilePath))
+                {
+                    var col = new System.Collections.Specialized.StringCollection();
+                    col.Add(r.FilePath);
+                    Clipboard.SetFileDropList(col);
+                }
+
+                e.Handled = true;
+                return;
+            }
+
+            // --- Ctrl + Shift + C → Copy image ---
+            if (e.Key == Key.C &&
+                (Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) ==
+                (ModifierKeys.Control | ModifierKeys.Shift))
+            {
+                if (File.Exists(r.FilePath))
+                {
+                    try
+                    {
+                        var bmp = new BitmapImage();
+                        using (var stream = File.OpenRead(r.FilePath))
+                        {
+                            bmp.BeginInit();
+                            bmp.CacheOption = BitmapCacheOption.OnLoad;
+                            bmp.StreamSource = stream;
+                            bmp.EndInit();
+                        }
+
+                        Clipboard.SetImage(bmp);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("Copy image failed: " + ex);
+                    }
+                }
+
+                e.Handled = true;
+                return;
+            }
+
+            // Enter key → open image
             if (e.Key == Key.Enter)
             {
-                if (ResultsList.SelectedItem is SearchResult r)
+                if (File.Exists(r.FilePath))
                     OpenFileWithShell(r.FilePath);
+
+                e.Handled = true;
             }
         }
+
 
         private void SearchBox_KeyDown(object sender, KeyEventArgs e)
         {
@@ -380,6 +447,19 @@ namespace SmartMemeSearch.Wpf
                 SearchBox.SelectAll();
                 e.Handled = true;
             }
+        }
+
+        private SearchResult? GetSelected()
+        {
+            return ResultsList.SelectedItem as SearchResult;
+        }
+
+        private void ResultsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var r = GetSelected();
+            if (r == null || string.IsNullOrEmpty(r.FilePath)) return;
+
+            OpenFileWithShell(r.FilePath);
         }
 
 
