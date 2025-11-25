@@ -10,6 +10,10 @@
 	<ApplicationIcon>Assets\smile.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Assets\lat.traineddata" />
+  </ItemGroup>
+
 	<ItemGroup>
 		<!-- SQLite for DB in %LOCALAPPDATA% -->
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
@@ -29,6 +33,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\clip_text.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\tessdata\lat.traineddata">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\LockScreenLogo.scale-200.png" />

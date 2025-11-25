@@ -205,7 +205,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
             var dialog = new FolderManagerDialog(existing);
             dialog.Owner = App.Current.MainWindow;
 
-            if (!dialog.ShowDialog() != true)
+            if (dialog.ShowDialog() != true)
             {
                 return;
             }
