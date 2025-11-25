@@ -45,6 +45,18 @@ namespace SmartMemeSearch.Wpf
             if (vm == null)
                 return;
 
+            vm.SearchCompleted += () =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    if (ResultsList.Items.Count > 0)
+                    {
+                        ResultsList.ScrollIntoView(ResultsList.Items[0]);
+                        ResultsList.UpdateLayout();
+                    }
+                });
+            };
+
             if (AdsView != null)
             {
 

@@ -16,6 +16,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
         private string _query = string.Empty;
 
         public ObservableCollection<SearchResult> Results { get; } = new();
+        public event Action? SearchCompleted;
 
         public string Query
         {
@@ -117,6 +118,9 @@ namespace SmartMemeSearch.Wpf.ViewModels
                 else
                     _ = LoadThumbnailAsync(r);
             }
+
+            // 🔥 Fire event after results are added
+            SearchCompleted?.Invoke();
         }
 
         /*
