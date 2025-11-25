@@ -39,10 +39,12 @@
                      Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
                      PreviewKeyDown="SearchBox_KeyDown"/>
             <Button Content="Manage Meme Folders"
-                    Width="120"
+                    Width="130"
+                    Margin="8,0,8,0"
                     Click="ManageFolders_Click"/>
             <Button Content="Remove Adds"
                     Width="80"
+                    Margin="8,0,8,0"
                     Click="RemoveAdds_Click"/>
         </StackPanel>
 
