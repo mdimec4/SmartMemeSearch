@@ -17,6 +17,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using Clipboard = System.Windows.Clipboard;
 using ContextMenu = System.Windows.Controls.ContextMenu;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MenuItem = System.Windows.Controls.MenuItem;
 
 namespace SmartMemeSearch.Wpf
@@ -299,6 +300,44 @@ namespace SmartMemeSearch.Wpf
                 Debug.WriteLine("Open file failed: " + ex);
             }
         }
+
+        private void ResultsList_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                if (ResultsList.SelectedItem is SearchResult r)
+                    OpenFileWithShell(r.FilePath);
+            }
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                if (ResultsList.Items.Count > 0)
+                {
+                    ResultsList.Focus();
+                    ResultsList.SelectedIndex = 0;
+
+                    var item = ResultsList.ItemContainerGenerator.ContainerFromIndex(0) as ListBoxItem;
+                    item?.Focus();
+                }
+
+                e.Handled = true;
+            }
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Ctrl+F → focus search box
+            if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+                e.Handled = true;
+            }
+        }
+
 
         // TODO reintroduce Keyboard functionality
         /*

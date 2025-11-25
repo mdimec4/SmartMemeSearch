@@ -7,7 +7,8 @@
         Title="Smart Meme Search"
         Width="1200"
         Height="800"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        KeyDown="Window_KeyDown">
 
     <Window.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
@@ -35,7 +36,8 @@
                      Width="400"
                      Margin="0,0,8,0"
                      VerticalAlignment="Center"
-                     Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"/>
+                     Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
+                     KeyDown="SearchBox_KeyDown"/>
             <Button Content="Manage Meme Folders"
                     Width="80"
                     Click="ManageFolders_Click"/>
@@ -52,93 +54,90 @@
             </Grid.RowDefinitions>
 
             <!-- Meme grid -->
-            <ScrollViewer Grid.Row="0">
-                <ListBox ItemsSource="{Binding Results}"
-         BorderThickness="0"
-         ScrollViewer.VerticalScrollBarVisibility="Auto"
-         HorizontalContentAlignment="Stretch">
+            <ListBox x:Name="ResultsList" 
+                ItemsSource="{Binding Results}"
+                BorderThickness="0"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                HorizontalContentAlignment="Stretch"
+                KeyDown="ResultsList_KeyDown">
 
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical"/>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
 
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="4"
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="4"
                 Height="200"
                 BorderBrush="Gray"
                 BorderThickness="1"
                 CornerRadius="4"
                 HorizontalAlignment="Stretch">
 
-                                <Border.ContextMenu>
-                                    <StaticResource ResourceKey="MemeContextMenu" />
-                                </Border.ContextMenu>
+                            <Border.ContextMenu>
+                                <StaticResource ResourceKey="MemeContextMenu" />
+                            </Border.ContextMenu>
 
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="202"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="202"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
 
-                                    <!-- Thumbnail -->
-                                    <Image Source="{Binding Thumbnail}"
+                                <!-- Thumbnail -->
+                                <Image Source="{Binding Thumbnail}"
                                        Width="200"
                                        Height="200"
                                        Grid.Row="0"
                                        Grid.Column="0"
                                        Stretch="UniformToFill"/>
 
-                                    <!-- Text area -->
-                                    <StackPanel Grid.Column="1"
+                                <!-- Text area -->
+                                <StackPanel Grid.Column="1"
                                         Margin="8"
                                         VerticalAlignment="Top"
                                         Orientation="Vertical">
 
-                                        <!-- File path -->
-                                        <TextBlock Text="{Binding FilePath}"
+                                    <!-- File path -->
+                                    <TextBlock Text="{Binding FilePath}"
                                            TextWrapping="NoWrap"
                                            TextTrimming="CharacterEllipsis"
                                            FontWeight="Bold"/>
 
-                                        <!-- Score -->
-                                        <TextBlock Text="{Binding Score}"
+                                    <!-- Score -->
+                                    <TextBlock Text="{Binding Score}"
                                Margin="0,4,0,0"/>
 
-                                        <!-- OCR preview -->
-                                        <TextBlock Text="{Binding OcrPreview}"
+                                    <!-- OCR preview -->
+                                    <TextBlock Text="{Binding OcrPreview}"
                                             TextWrapping="Wrap"
                                             TextTrimming="CharacterEllipsis"
                                             MaxHeight="60">
 
-                                            <TextBlock.ToolTip>
-                                                <Border Padding="8" MaxWidth="500">
-                                                    <TextBlock Text="{Binding OcrPreview}"
+                                        <TextBlock.ToolTip>
+                                            <Border Padding="8" MaxWidth="500">
+                                                <TextBlock Text="{Binding OcrPreview}"
                                                         TextWrapping="Wrap"/>
-                                                </Border>
-                                            </TextBlock.ToolTip>
+                                            </Border>
+                                        </TextBlock.ToolTip>
 
 </TextBlock>
-                                        <!-- prevents overflow -->
+                                    <!-- prevents overflow -->
 
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-
-
-                </ListBox>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
 
 
-            </ScrollViewer>
-
+            </ListBox>
             <!-- Ads area (WebView2) -->
             <Border Grid.Row="1"
                     Margin="8,4,8,8"
