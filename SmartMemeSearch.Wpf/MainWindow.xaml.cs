@@ -82,7 +82,7 @@ namespace SmartMemeSearch.Wpf
                 }
             });
         }
-
+#if MS_STORE_FREE_WITH_ADDS
         private async void InitAdds()
         {
             // A-Ads HTML
@@ -110,6 +110,7 @@ namespace SmartMemeSearch.Wpf
                 System.Diagnostics.Debug.WriteLine("ADS LOAD ERROR: " + ex);
             }
         }
+#endif
 
 
         private async Task RunExclusiveAutoSync(MainViewModel vm)
