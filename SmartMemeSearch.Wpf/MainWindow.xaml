@@ -5,15 +5,150 @@
         xmlns:conv="clr-namespace:SmartMemeSearch.Wpf.Converters"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="Smart Meme Search"
-        Width="1200"
-        Height="800"
+        Width="2048"
+        Height="1024"
         WindowStartupLocation="CenterScreen"
         KeyDown="Window_KeyDown">
 
     <Window.Resources>
+        <!-- Win11 base colors -->
+        <SolidColorBrush x:Key="Win11Background" Color="#F3F3F3"/>
+        <SolidColorBrush x:Key="Win11Card" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="Win11Border" Color="#D0D0D0"/>
+        <SolidColorBrush x:Key="Win11Button" Color="#E9E9E9"/>
+        <SolidColorBrush x:Key="Win11ButtonHover" Color="#DDDDDD"/>
+        <SolidColorBrush x:Key="Win11Text" Color="#202020"/>
+
+        <!-- Modern default font (Segoe UI Variable) -->
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI Variable"/>
+            <Setter Property="Foreground" Value="{StaticResource Win11Text}"/>
+        </Style>
+
+        <!-- Modern TextBox -->
+        <Style TargetType="TextBox">
+            <Setter Property="FontFamily" Value="Segoe UI Variable"/>
+            <Setter Property="Foreground" Value="{StaticResource Win11Text}"/>
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Win11Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border CornerRadius="8"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern button -->
+        <Style TargetType="Button">
+            <Setter Property="FontFamily" Value="Segoe UI Variable"/>
+            <Setter Property="Foreground" Value="{StaticResource Win11Text}"/>
+            <Setter Property="Background" Value="{StaticResource Win11Button}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Win11Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8"
+                            SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="root"
+                                    Property="Background"
+                                    Value="{StaticResource Win11ButtonHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="root"
+                                    Property="Background"
+                                    Value="#CFCFCF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="root" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Rounded ListBox items -->
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="root"
+                        CornerRadius="12"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="1"
+                        SnapsToDevicePixels="True">
+
+                            <ContentPresenter />
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <!-- Hover -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="root" Property="Background" Value="#F0F0F0"/>
+                                <Setter TargetName="root" Property="BorderBrush" Value="#C0C0C0"/>
+                                <Setter TargetName="root" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#22000000"
+                                                  BlurRadius="10"
+                                                  ShadowDepth="3"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+
+                            <!-- Selected -->
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="root" Property="Background" Value="#D0E6FF"/>
+                                <Setter TargetName="root" Property="BorderBrush" Value="#4A90E2"/>
+                                <Setter Property="Foreground" Value="#003A75"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+        <DropShadowEffect x:Key="TileShadow"
+                  Color="#22000000"
+                  ShadowDepth="2"
+                  BlurRadius="6"/>
+
+        <!-- Your existing converters & context menu -->
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <conv:BoolToVisibilityInverseConverter x:Key="BoolToVisibilityInverseConverter" />
-        <!-- Add your other converters -->
+
 
         <!-- ContextMenu instead of WinUI MenuFlyout -->
         <ContextMenu x:Key="MemeContextMenu">
@@ -24,6 +159,10 @@
             <MenuItem Header="Open folder" Click="OpenFolderMenu_Click"/>
         </ContextMenu>
     </Window.Resources>
+
+    <Window.Background>
+        <StaticResource ResourceKey="Win11Background"/>
+    </Window.Background>
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -100,16 +239,18 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Margin="4"
-                Height="200"
-                BorderBrush="Gray"
-                BorderThickness="1"
-                CornerRadius="4"
-                HorizontalAlignment="Stretch">
+                        Height="200"
+                        Background="{StaticResource Win11Card}"
+                        BorderBrush="{StaticResource Win11Border}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        SnapsToDevicePixels="True"
+                        Effect="{DynamicResource TileShadow}">
+
 
                             <Border.ContextMenu>
                                 <StaticResource ResourceKey="MemeContextMenu" />
                             </Border.ContextMenu>
-
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="202"/>
@@ -119,7 +260,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-
+                                        
                                 <!-- Thumbnail -->
                                 <Image Source="{Binding Thumbnail}"
                                        Width="200"
