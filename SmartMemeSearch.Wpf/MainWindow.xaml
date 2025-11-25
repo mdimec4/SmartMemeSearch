@@ -35,7 +35,7 @@
                      Width="400"
                      Margin="0,0,8,0"
                      VerticalAlignment="Center"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                     Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"/>
             <Button Content="Manage Meme Folders"
                     Width="80"
                     Click="ManageFolders_Click"/>
