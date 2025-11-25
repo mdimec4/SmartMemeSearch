@@ -53,31 +53,81 @@
 
             <!-- Meme grid -->
             <ScrollViewer Grid.Row="0">
-                <ItemsControl ItemsSource="{Binding Results}">
-                    <ItemsControl.ItemsPanel>
+                <ListBox ItemsSource="{Binding Results}"
+         BorderThickness="0"
+         ScrollViewer.VerticalScrollBarVisibility="Auto"
+         HorizontalContentAlignment="Stretch">
+
+                    <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel />
+                            <StackPanel Orientation="Vertical"/>
                         </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
+                    </ListBox.ItemsPanel>
+
+                    <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="4"
-                                    BorderBrush="Gray"
-                                    BorderThickness="1"
-                                    CornerRadius="4">
+                Height="200"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="4"
+                HorizontalAlignment="Stretch">
+
                                 <Border.ContextMenu>
                                     <StaticResource ResourceKey="MemeContextMenu" />
                                 </Border.ContextMenu>
+
                                 <Grid>
-                                    <Image Source="{Binding ThumbnailPath}"
-                                           Width="200"
-                                           Height="200"
-                                           Stretch="UniformToFill"/>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="202"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Thumbnail -->
+                                    <Image Source="{Binding Thumbnail}"
+                       Width="200"
+                       Height="200"
+                       Grid.Row="0"
+                       Grid.Column="0"
+                       Stretch="UniformToFill"/>
+
+                                    <!-- Text area -->
+                                    <StackPanel Grid.Column="1"
+                            Margin="8"
+                            VerticalAlignment="Top"
+                            Orientation="Vertical">
+
+                                        <!-- File path -->
+                                        <TextBlock Text="{Binding FilePath}"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis"
+                               FontWeight="Bold"/>
+
+                                        <!-- Score -->
+                                        <TextBlock Text="{Binding Score}"
+                               Margin="0,4,0,0"/>
+
+                                        <!-- OCR preview -->
+                                        <TextBlock Text="{Binding OcrPreview}"
+                               TextWrapping="Wrap"
+                               TextTrimming="CharacterEllipsis"
+                               MaxHeight="60"/>
+                                        <!-- prevents overflow -->
+
+                                    </StackPanel>
                                 </Grid>
                             </Border>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </ListBox.ItemTemplate>
+
+
+                </ListBox>
+
+
             </ScrollViewer>
 
             <!-- Ads area (WebView2) -->
