@@ -7,11 +7,17 @@ namespace SmartMemeSearch.Wpf.Services
     public class OcrService
     {
         private readonly TesseractEngine _engine;
+
         public OcrService()
         {
             string baseDir = AppContext.BaseDirectory;
-            string dataPath = Path.Combine(baseDir, "Assets", "tessdata");
-            _engine = new TesseractEngine(dataPath, "lat", EngineMode.Default);
+            string tessdataDir = Path.Combine(baseDir, "Assets", "tessdata");
+
+            // Auto-detect among multiple languages
+            string languages =
+                "eng+deu+fra+spa+ita+slv+hrv+rus+ukr+jpn+jpn_vert+kor+chi_sim";
+
+            _engine = new TesseractEngine(tessdataDir, languages, EngineMode.Default);
         }
 
         public async Task<string> ExtractTextAsync(byte[] imageBytes)

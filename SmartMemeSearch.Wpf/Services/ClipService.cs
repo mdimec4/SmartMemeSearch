@@ -3,16 +3,14 @@
 // --------------------------------------------------------
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using System;
-using System.Collections.Generic;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using Image = SixLabors.ImageSharp.Image;
 using Path = System.IO.Path;
+using Size = SixLabors.ImageSharp.Size;
 
 namespace SmartMemeSearch.Wpf.Services
 {
@@ -194,51 +192,49 @@ namespace SmartMemeSearch.Wpf.Services
         // -----------------------------------------------------
         private Tensor<float> PreprocessImage(byte[] bytes)
         {
-            return PreprocessImageAsync(bytes).GetAwaiter().GetResult();
-        }
+            using Image<Rgba32> img = Image.Load<Rgba32>(bytes);
 
+            const int target = 224;
 
-        private async Task<Tensor<float>> PreprocessImageAsync(byte[] bytes)
-        {
-            const int size = 224;
-
-            var image = new BitmapImage();
-            using (var stream = new MemoryStream(bytes))
+            // Resize to CLIP resolution
+            img.Mutate(x => x.Resize(new ResizeOptions
             {
-                image.BeginInit();
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.StreamSource = stream;
-                image.EndInit();
-            }
-
-            byte[] pixels = new byte[4 * image.PixelWidth * image.PixelHeight];
-            image.CopyPixels(pixels, 4 * image.PixelWidth, 0);
-
-            float[] data = new float[1 * 3 * size * size];
+                Size = new Size(target, target),
+                Mode = ResizeMode.Crop // Or ResizeMode.Stretch, but CLIP prefers Crop
+            }));
 
             float[] mean = { 0.481454f, 0.457828f, 0.408210f };
             float[] std = { 0.268629f, 0.261303f, 0.275777f };
 
-            for (int y = 0; y < size; y++)
+            float[] data = new float[1 * 3 * target * target];
+
+            img.ProcessPixelRows(accessor =>
             {
-                for (int x = 0; x < size; x++)
+                for (int y = 0; y < target; y++)
                 {
-                    int idxImg = (y * size + x) * 4;
+                    var row = accessor.GetRowSpan(y);
+                    for (int x = 0; x < target; x++)
+                    {
+                        Rgba32 px = row[x];
 
-                    byte r = pixels[idxImg + 0];
-                    byte g = pixels[idxImg + 1];
-                    byte b = pixels[idxImg + 2];
+                        int idx = y * target + x;
 
-                    int idx = y * size + x;
+                        float r = px.R / 255f;
+                        float g = px.G / 255f;
+                        float b = px.B / 255f;
 
-                    data[idx] = ((r / 255f) - mean[0]) / std[0];
-                    data[idx + size * size] = ((g / 255f) - mean[1]) / std[1];
-                    data[idx + 2 * size * size] = ((b / 255f) - mean[2]) / std[2];
+                        data[idx] = (r - mean[0]) / std[0];
+                        data[idx + target * target] = (g - mean[1]) / std[1];
+                        data[idx + 2 * target * target] = (b - mean[2]) / std[2];
+                    }
                 }
-            }
+            });
 
-            return new DenseTensor<float>(data, new[] { 1, 3, size, size });
+            return new DenseTensor<float>(data, new[] { 1, 3, target, target });
         }
+
+
+
 
         // -----------------------------------------------------
         // Built-in test for debugging
