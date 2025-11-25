@@ -184,18 +184,6 @@ namespace SmartMemeSearch.Wpf
             _ = vm.RemoveAdsAsync();
         }
 
-        // TODO
-        /*
-        private void ResultItem_DoubleTapped(object sender, MouseDoubleClickEventArgs e)
-        {
-            var r = GetResultFromSender(sender);
-            if (r == null || string.IsNullOrEmpty(r.FilePath))
-                return;
-
-            OpenFileWithShell(r.FilePath);
-        }
-        */
-
         private void OpenItem_Click(object sender, RoutedEventArgs e)
         {
             if (GetResultFromSender(sender) is { FilePath: var path } &&
@@ -461,95 +449,5 @@ namespace SmartMemeSearch.Wpf
 
             OpenFileWithShell(r.FilePath);
         }
-
-
-        // TODO reintroduce Keyboard functionality
-        /*
-        private void Open_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-        {
-            if (ResultsList.SelectedItem is SearchResult r)
-                OpenFileWithShell(r.FilePath);
-
-            args.Handled = true;
-        }
-
-        private async void CopyImage_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-        {
-            if (ResultsList.SelectedItem is SearchResult r)
-            {
-                if (File.Exists(r.FilePath))
-                {
-                    var image = new BitmapImage();
-                    using (var stream = File.OpenRead(r.FilePath))
-                    {
-                        image.BeginInit();
-                        image.CacheOption = BitmapCacheOption.OnLoad;
-                        image.StreamSource = stream;
-                        image.EndInit();
-                    }
-
-                    Clipboard.SetImage(image);
-                }
-            }
-            args.Handled = true;
-        }
-        
-
-        private void CopyPath_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-        {
-            if (ResultsList.SelectedItem is SearchResult r)
-            {
-                Clipboard.SetText(r.FilePath);
-            }
-            args.Handled = true;
-        }
-
-        private void FocusSearch_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-        {
-            SearchBox.Focus(FocusState.Programmatic);
-            SearchBox.SelectAll(); // optional
-            args.Handled = true;
-        }
-        private void ClearSearch_KA_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-        {
-            SearchBox.Text = "";
-            args.Handled = true;
-        }
-
-        private void SearchBox_KeyDown(object sender, KeyRoutedEventArgs e)
-        {
-            if (ResultsList.Items.Count == 0)
-                return;
-
-            // Down arrow → select first item
-            if (e.Key == Windows.System.VirtualKey.Down)
-            {
-                ResultsList.SelectedIndex = 0;
-                ResultsList.Focus(FocusState.Programmatic);
-                e.Handled = true;
-                return;
-            }
-
-            // Up arrow → select last item
-            if (e.Key == Windows.System.VirtualKey.Up)
-            {
-                ResultsList.SelectedIndex = ResultsList.Items.Count - 1;
-                ResultsList.Focus(FocusState.Programmatic);
-                e.Handled = true;
-                return;
-            }
-
-            // Enter: focus and select first item
-            if (e.Key == Windows.System.VirtualKey.Enter)
-            {
-                if (ResultsList.Items.Count > 0)
-                {
-                    ResultsList.SelectedIndex = 0;
-                    ResultsList.Focus(FocusState.Programmatic);
-                }
-
-                e.Handled = true;
-            }
-        }*/
     }
 }
