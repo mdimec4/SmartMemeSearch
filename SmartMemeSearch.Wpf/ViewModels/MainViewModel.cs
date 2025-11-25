@@ -66,7 +66,6 @@ namespace SmartMemeSearch.Wpf.ViewModels
         private readonly ImporterService _importer;
         private readonly SearchService _search;
         private readonly AutoSyncService _autoSync;
-        private readonly StoreService _store;
 
         //private bool _isImportingFolder;
         private bool _syncRunning = false;
@@ -81,8 +80,6 @@ namespace SmartMemeSearch.Wpf.ViewModels
             _search = new SearchService(_clip, _db);
             _autoSync = new AutoSyncService(_importer, _db);
 
-            _store = new StoreService(/*App.Current.MainWindow*/);
-
             _debounceTimer = new DispatcherTimer();
             _debounceTimer.Interval = TimeSpan.FromMilliseconds(DebounceDelayMs);
             _debounceTimer.Tick += (s, e) =>
@@ -92,9 +89,6 @@ namespace SmartMemeSearch.Wpf.ViewModels
             };
 
             ThumbnailCache.Initialize(_dispatcher);
-
-            // Kick off premium/license check (auto-restore)
-            _ = InitializePremiumAsync();
         }
 
         public void Search()
@@ -331,40 +325,5 @@ namespace SmartMemeSearch.Wpf.ViewModels
                 p => _dispatcher.Invoke(() => ProgressValue = p)
             );
         }
-
-
-        private async Task InitializePremiumAsync()
-        {
-            try
-            {
-                bool owned = await _store.IsPremiumAsync();
-                IsPremium = owned;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("InitializePremiumAsync error: " + ex);
-            }
-        }
-
-        public async Task RemoveAdsAsync()
-        {
-            if (IsPremium)
-                return; // already premium
-
-            bool success = await _store.PurchaseRemoveAdsAsync();
-            if (success)
-            {
-                IsPremium = true;
-                // Optional: you could also trigger a toast or status text here.
-                CurrentFile = "Thanks for supporting the app! Ads removed.";
-            }
-            else
-            {
-                // Optional: show feedback in UI
-                CurrentFile = "Purchase cancelled or failed.";
-            }
-        }
-
-
     }
 }

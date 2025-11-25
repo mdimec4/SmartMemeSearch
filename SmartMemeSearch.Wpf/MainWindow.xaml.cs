@@ -33,9 +33,6 @@ namespace SmartMemeSearch.Wpf
         public MainWindow()
         {
             InitializeComponent();
-#if MS_STORE_FREE_WITH_ADDS
-            //StoreService.NotifyWindowReady();
-#endif
             Loaded += Page_Loaded;
         }
 
@@ -186,14 +183,6 @@ namespace SmartMemeSearch.Wpf
             if (vm == null)
                 return;
            vm.ManageFolders();
-        }
-
-        private void RemoveAdds_Click(object sender, RoutedEventArgs e)
-        {
-            var vm = DataContext as MainViewModel;
-            if (vm == null)
-                return;
-            _ = vm.RemoveAdsAsync();
         }
 
         private void OpenItem_Click(object sender, RoutedEventArgs e)
