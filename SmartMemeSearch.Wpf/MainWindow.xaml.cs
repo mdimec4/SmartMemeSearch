@@ -35,6 +35,7 @@ namespace SmartMemeSearch.Wpf
 #if MS_STORE_FREE_WITH_ADDS
             StoreService.NotifyWindowReady();
 #endif
+            Loaded += Page_Loaded;
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
