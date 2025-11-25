@@ -37,7 +37,7 @@
                      Margin="0,0,8,0"
                      VerticalAlignment="Center"
                      Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
-                     KeyDown="SearchBox_KeyDown"/>
+                     PreviewKeyDown="SearchBox_KeyDown"/>
             <Button Content="Manage Meme Folders"
                     Width="80"
                     Click="ManageFolders_Click"/>

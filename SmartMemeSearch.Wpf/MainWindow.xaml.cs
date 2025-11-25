@@ -312,6 +312,7 @@ namespace SmartMemeSearch.Wpf
 
         private void SearchBox_KeyDown(object sender, KeyEventArgs e)
         {
+            // ENTER → go to first result
             if (e.Key == Key.Enter)
             {
                 if (ResultsList.Items.Count > 0)
@@ -324,8 +325,51 @@ namespace SmartMemeSearch.Wpf
                 }
 
                 e.Handled = true;
+                return;
+            }
+
+            // ESC → clear search
+            if (e.Key == Key.Escape)
+            {
+                SearchBox.Clear();
+                e.Handled = true;
+                return;
+            }
+
+            // DOWN ARROW → jump to first item
+            if (e.Key == Key.Down)
+            {
+                if (ResultsList.Items.Count > 0)
+                {
+                    ResultsList.Focus();
+                    ResultsList.SelectedIndex = 0;
+
+                    var item = ResultsList.ItemContainerGenerator.ContainerFromIndex(0) as ListBoxItem;
+                    item?.Focus();
+                }
+
+                e.Handled = true;
+                return;
+            }
+
+            // UP ARROW → jump to last item
+            if (e.Key == Key.Up)
+            {
+                if (ResultsList.Items.Count > 0)
+                {
+                    int last = ResultsList.Items.Count - 1;
+                    ResultsList.Focus();
+                    ResultsList.SelectedIndex = last;
+
+                    var item = ResultsList.ItemContainerGenerator.ContainerFromIndex(last) as ListBoxItem;
+                    item?.Focus();
+                }
+
+                e.Handled = true;
+                return;
             }
         }
+
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
