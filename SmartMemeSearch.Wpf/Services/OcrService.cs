@@ -14,8 +14,8 @@ namespace SmartMemeSearch.Wpf.Services
             string tessdataDir = Path.Combine(baseDir, "Assets", "tessdata");
 
             // Auto-detect among multiple languages
-            string languages =
-                "eng+deu+fra+spa+ita+slv+hrv+rus+ukr+jpn+jpn_vert+kor+chi_sim";
+            string languages = "eng";
+                //"eng+deu+fra+spa+ita+slv+hrv+rus+ukr+jpn+jpn_vert+kor+chi_sim";
 
             _engine = new TesseractEngine(tessdataDir, languages, EngineMode.Default);
         }
