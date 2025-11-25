@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using System;
 using System.Collections.Concurrent;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -146,50 +148,38 @@ namespace SmartMemeSearch.Wpf.Services
         {
             EnsureInitialized();
 
-            await _thumbLock.WaitAsync().ConfigureAwait(false);
+            await _thumbLock.WaitAsync();
             try
             {
-                // create thumbnail on background thread
-                await Task.Run(() =>
+                // 1) Decode & resize using ImageSharp (supports .webp)
+                await Task.Run(async () =>
                 {
-                    using var src = new Bitmap(originalPath);
+                    using var image = await SixLabors.ImageSharp.Image.LoadAsync(originalPath);
 
-                    int width = src.Width;
-                    int height = src.Height;
+                    int width = image.Width;
+                    int height = image.Height;
 
                     double scale = (double)THUMB_SIZE / Math.Max(width, height);
                     int newW = Math.Max(1, (int)(width * scale));
                     int newH = Math.Max(1, (int)(height * scale));
 
-                    using var thumb = new Bitmap(newW, newH);
+                    image.Mutate(x => x.Resize(newW, newH));
 
-                    using (var g = Graphics.FromImage(thumb))
-                    {
-                        g.CompositingQuality = CompositingQuality.HighQuality;
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.SmoothingMode = SmoothingMode.HighQuality;
-                        g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-                        g.DrawImage(src, 0, 0, newW, newH);
-                    }
-
-                    // ensure directory exists
                     Directory.CreateDirectory(Path.GetDirectoryName(thumbPath)!);
 
-                    // save as JPEG
-                    thumb.Save(thumbPath, ImageFormat.Jpeg);
-                }).ConfigureAwait(false);
+                    await image.SaveAsJpegAsync(thumbPath);
+                });
 
-                // load thumbnail into BitmapImage (must be on UI thread)
+                // 2) Load into WPF BitmapImage (must be on UI thread)
                 return await _dispatcher!.InvokeAsync(() =>
                 {
-                    var img = new BitmapImage();
-                    img.BeginInit();
-                    img.CacheOption = BitmapCacheOption.OnLoad;
-                    img.UriSource = new Uri(thumbPath, UriKind.Absolute);
-                    img.EndInit();
-                    img.Freeze();
-                    return img;
+                    var bmp = new BitmapImage();
+                    bmp.BeginInit();
+                    bmp.CacheOption = BitmapCacheOption.OnLoad;
+                    bmp.UriSource = new Uri(thumbPath, UriKind.Absolute);
+                    bmp.EndInit();
+                    bmp.Freeze();
+                    return bmp;
                 });
             }
             finally
@@ -197,5 +187,6 @@ namespace SmartMemeSearch.Wpf.Services
                 _thumbLock.Release();
             }
         }
+
     }
 }
