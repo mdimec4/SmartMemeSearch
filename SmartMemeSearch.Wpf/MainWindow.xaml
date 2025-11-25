@@ -89,23 +89,23 @@
 
                                     <!-- Thumbnail -->
                                     <Image Source="{Binding Thumbnail}"
-                       Width="200"
-                       Height="200"
-                       Grid.Row="0"
-                       Grid.Column="0"
-                       Stretch="UniformToFill"/>
+                                       Width="200"
+                                       Height="200"
+                                       Grid.Row="0"
+                                       Grid.Column="0"
+                                       Stretch="UniformToFill"/>
 
                                     <!-- Text area -->
                                     <StackPanel Grid.Column="1"
-                            Margin="8"
-                            VerticalAlignment="Top"
-                            Orientation="Vertical">
+                                        Margin="8"
+                                        VerticalAlignment="Top"
+                                        Orientation="Vertical">
 
                                         <!-- File path -->
                                         <TextBlock Text="{Binding FilePath}"
-                               TextWrapping="NoWrap"
-                               TextTrimming="CharacterEllipsis"
-                               FontWeight="Bold"/>
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           FontWeight="Bold"/>
 
                                         <!-- Score -->
                                         <TextBlock Text="{Binding Score}"
@@ -113,9 +113,18 @@
 
                                         <!-- OCR preview -->
                                         <TextBlock Text="{Binding OcrPreview}"
-                               TextWrapping="Wrap"
-                               TextTrimming="CharacterEllipsis"
-                               MaxHeight="60"/>
+                                            TextWrapping="Wrap"
+                                            TextTrimming="CharacterEllipsis"
+                                            MaxHeight="60">
+
+                                            <TextBlock.ToolTip>
+                                                <Border Padding="8" MaxWidth="500">
+                                                    <TextBlock Text="{Binding OcrPreview}"
+                                                        TextWrapping="Wrap"/>
+                                                </Border>
+                                            </TextBlock.ToolTip>
+
+</TextBlock>
                                         <!-- prevents overflow -->
 
                                     </StackPanel>
