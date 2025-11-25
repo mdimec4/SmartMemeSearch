@@ -10,6 +10,8 @@
 	<ApplicationIcon>Assets\smile.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
+
   <ItemGroup>
     <None Remove="Assets\lat.traineddata" />
   </ItemGroup>

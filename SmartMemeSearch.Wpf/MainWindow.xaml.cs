@@ -34,7 +34,7 @@ namespace SmartMemeSearch.Wpf
         {
             InitializeComponent();
 #if MS_STORE_FREE_WITH_ADDS
-            StoreService.NotifyWindowReady();
+            //StoreService.NotifyWindowReady();
 #endif
             Loaded += Page_Loaded;
         }
