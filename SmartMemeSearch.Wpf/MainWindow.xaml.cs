@@ -82,6 +82,7 @@ namespace SmartMemeSearch.Wpf
                 }
             });
         }
+
 #if MS_STORE_FREE_WITH_ADDS
         private async void InitAdds()
         {
