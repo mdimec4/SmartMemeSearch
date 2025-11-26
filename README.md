@@ -26,7 +26,7 @@ Great for meme collectors, content creators, and anyone who wants fast access to
 Install via Microsoft Store
 ---------------------------
 
-The easieat way to install is via [Microsoft Store](https://apps.microsoft.com/detail/9nllw6hfj3vn?hl=sl-SI&gl=SI).
+The easieat way to install it for free is via [Microsoft Store](https://apps.microsoft.com/detail/9nllw6hfj3vn?hl=sl-SI&gl=SI).
 
 Compile
 -------
