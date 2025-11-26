@@ -31,4 +31,4 @@ The easieat way to install is via [Microsoft Store](https://apps.microsoft.com/d
 Compile
 -------
 
-Load solution with Visual Studio 2022 + and build SmartMemeSearch.Wpf project.
+Load a solution with Visual Studio 2022 + and build the SmartMemeSearch.Wpf project.
