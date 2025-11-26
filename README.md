@@ -9,7 +9,7 @@ Search by keywords, topics, objects, emotions, or text appearing inside the meme
 
 Features
 
-🔍 AI-powered semantic search — understands the content of images, not just filenames
+🔍 AI-powered semantic search — understands the content of images
 
 📝 OCR text reading — detects text inside memes for accurate search
 
