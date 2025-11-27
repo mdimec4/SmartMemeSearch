@@ -311,12 +311,6 @@ namespace SmartMemeSearch.Wpf.ViewModels
                     return;
                 }
 
-                _dispatcher.Invoke(() =>
-                {
-                    CurrentFile = "Syncing folders...";
-                    ProgressValue = 0;
-                });
-
                 // Use the existing helper
                 await RunExclusiveAutoSyncFromVM();
             });
