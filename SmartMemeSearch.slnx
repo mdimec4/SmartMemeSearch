@@ -6,7 +6,13 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="SmartMemeSearch.Wpf/SmartMemeSearch.Wpf.csproj" Id="2b776460-42c5-47c0-a739-1610c4472f3d" />
+  <Project Path="OcrNative/OcrNative.vcxproj" Id="dd22f6df-86c8-438d-be06-692cebab7fc1">
+    <Platform Solution="*|ARM" Project="x64" />
+    <Platform Solution="*|ARM64" Project="x64" />
+  </Project>
+  <Project Path="SmartMemeSearch.Wpf/SmartMemeSearch.Wpf.csproj" Id="2b776460-42c5-47c0-a739-1610c4472f3d">
+    <BuildDependency Project="OcrNative/OcrNative.vcxproj" />
+  </Project>
   <Project Path="SmartMemeSearch/SmartMemeSearch.csproj">
     <Platform Solution="*|Any CPU" Project="x64" />
     <Platform Solution="*|ARM" Project="x64" />
