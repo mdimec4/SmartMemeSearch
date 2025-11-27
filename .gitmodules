@@ -1,3 +1,0 @@
-[submodule "SmartMemeSearch.Wpf/Assets/tessdata"]
-	path = SmartMemeSearch.Wpf/Assets/tessdata
-	url = https://github.com/tesseract-ocr/tessdata_fast.git
