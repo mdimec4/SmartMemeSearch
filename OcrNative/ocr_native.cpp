@@ -9,6 +9,7 @@ using namespace winrt;
 using namespace Windows::Foundation;
 using namespace Windows::Storage::Streams;
 using namespace Windows::Graphics::Imaging;
+using namespace winrt::Windows::Globalization;
 using namespace Windows::Media::Ocr;
 
 // Exported function signature:
@@ -39,8 +40,9 @@ int __stdcall OcrExtractText(const std::uint8_t* data, int length, wchar_t** out
         auto decoder = BitmapDecoder::CreateAsync(stream).get();
         auto bitmap = decoder.GetSoftwareBitmapAsync().get();
 
-        // Create OCR engine using user profile languages
-        auto engine = OcrEngine::TryCreateFromUserProfileLanguages();
+        // Create OCR engine
+        Language lang{ L"en-US" };
+        auto engine = OcrEngine::TryCreateFromLanguage(lang);
         if (!engine)
             return E_FAIL;
 
