@@ -95,7 +95,7 @@ namespace SmartMemeSearch.Wpf.Services
             string ocrText;
             try
             {
-                ocrText = await _ocr.ExtractTextAsync(bytes);
+                ocrText = await _ocr.ExtractTextAsync(file);
             }
             catch (Exception ex)
             {

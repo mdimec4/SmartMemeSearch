@@ -1,36 +1,48 @@
-﻿using System;
+﻿using Sdcb.PaddleOCR;
+using Sdcb.PaddleOCR.Models.Local;
+using System;
 using System.IO;
-using Tesseract;
+using OpenCvSharp;
 
 namespace SmartMemeSearch.Wpf.Services
 {
     public class OcrService
     {
-        private readonly TesseractEngine _engine;
+        private readonly PaddleOcrAll _ocr;
 
         public OcrService()
         {
-            string baseDir = AppContext.BaseDirectory;
-            string tessdataDir = Path.Combine(baseDir, "Assets", "tessdata");
-
-            // Auto-detect among multiple languages
-            string languages = "eng";
-                //"eng+deu+fra+spa+ita+slv+hrv+rus+ukr+jpn+jpn_vert+kor+chi_sim";
-
-            _engine = new TesseractEngine(tessdataDir, languages, EngineMode.Default);
+            // loads built-in English OCR model
+            _ocr = new PaddleOcrAll(LocalFullModels.EnglishV4)
+            {
+                AllowRotateDetection = true,
+                Enable180Classification = true,
+            };
         }
 
-        public async Task<string> ExtractTextAsync(byte[] imageBytes)
+        public async Task<string> ExtractTextAsync(string filePath)
         {
+            return await Task.Run(() => ExtractText(filePath));
+        }
+
+        private string ExtractText(string filePath)
+        {
+            if (!File.Exists(filePath))
+                return "";
+
             try
             {
-                using var img = Pix.LoadFromMemory(imageBytes);
-                using var page = _engine.Process(img);
-                return page.GetText();
+ 
+                Mat image = Cv2.ImRead(filePath, ImreadModes.Color);
+
+                // run OCR
+                PaddleOcrResult result = _ocr.Run(image);
+
+                // return all recognized text in a single line
+                return result.Text;
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine("OCR ERROR: " + ex);
                 return "";
             }
         }
