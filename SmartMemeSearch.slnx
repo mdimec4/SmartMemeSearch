@@ -13,16 +13,4 @@
   <Project Path="SmartMemeSearch.Wpf/SmartMemeSearch.Wpf.csproj" Id="2b776460-42c5-47c0-a739-1610c4472f3d">
     <BuildDependency Project="OcrNative/OcrNative.vcxproj" />
   </Project>
-  <Project Path="SmartMemeSearch/SmartMemeSearch.csproj">
-    <Platform Solution="*|Any CPU" Project="x64" />
-    <Platform Solution="*|ARM" Project="x64" />
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
-    <Build Solution="*|Any CPU" Project="false" />
-    <Build Solution="*|ARM" Project="false" />
-    <Deploy Solution="*|ARM64" />
-    <Deploy Solution="*|x64" />
-    <Deploy Solution="*|x86" />
-  </Project>
 </Solution>
