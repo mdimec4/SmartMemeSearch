@@ -1,4 +1,5 @@
-﻿using SmartMemeSearch.Wpf.Services;
+﻿using SmartMemeSearch.Wpf.Views;
+using SmartMemeSearch.Wpf.Services;
 using SmartMemeSearch.Wpf.ViewModels;
 using System;
 using System.Diagnostics;
@@ -29,7 +30,6 @@ namespace SmartMemeSearch.Wpf
     {
 
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
-        private bool _autoSyncStarted = false;
         public MainWindow()
         {
             InitializeComponent();
@@ -64,23 +64,22 @@ namespace SmartMemeSearch.Wpf
 #endif
             }
 
-            if (_autoSyncStarted)
-                return;
 
-            _autoSyncStarted = true;
-
-
-
-            _ = Task.Run(async () =>
+            if (!vm.HasAnyFolders())
             {
-                await RunExclusiveAutoSync(vm); // first sync
+                var dlg = new FirstRunDialog() { Owner = this };
+                bool? result = dlg.ShowDialog();
 
-                while (true)
+                if (result == true && dlg.ChooseFolders)
                 {
-                    await Task.Delay(TimeSpan.FromMinutes(5));
-                    await RunExclusiveAutoSync(vm);
+                    // Open folder manager
+                    vm.ManageFolders();
                 }
-            });
+            }
+
+            vm.StartAutoSyncLoop();
+
+
         }
 
 #if MS_STORE_FREE_WITH_ADDS
@@ -112,47 +111,6 @@ namespace SmartMemeSearch.Wpf
             }
         }
 #endif
-
-
-        private async Task RunExclusiveAutoSync(MainViewModel vm)
-        {
-            if (vm is null)
-                return;
-
-            // Skip if another sync is running
-            if (!vm.TryBeginSync())
-                return;
-
-            // Use the UI thread dispatcher stored in the Page field
-            _dispatcher.Invoke(() =>
-            {
-                vm.IsImporting = true;
-                vm.CurrentFile = "Checking folders...";
-                vm.ProgressValue = 0;
-            });
-
-            try
-            {
-                await vm.AutoSyncAllAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("AUTO SYNC ERROR: " + ex);
-            }
-            finally
-            {
-                _dispatcher.Invoke(() =>
-                {
-                    vm.IsImporting = false;
-                    vm.CurrentFile = "Done";
-
-                    if (!string.IsNullOrWhiteSpace(vm.Query))
-                        vm.Search();
-                });
-
-                vm.EndSync();
-            }
-        }
 
         private static SearchResult? GetResultFromSender(object sender)
         {

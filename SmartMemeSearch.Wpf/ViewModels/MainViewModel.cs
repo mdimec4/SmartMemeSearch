@@ -1,7 +1,6 @@
 ﻿using SmartMemeSearch.Wpf.Services;
 using SmartMemeSearch.Wpf.Views;
 using System.Collections.ObjectModel;
-using System.Windows.Input;
 using System.Windows.Threading;
 
 
@@ -13,11 +12,12 @@ namespace SmartMemeSearch.Wpf.ViewModels
         private readonly DispatcherTimer _debounceTimer;
         private const int DebounceDelayMs = 200;
 
-        private string _query = string.Empty;
 
         public ObservableCollection<SearchResult> Results { get; } = new();
         public event Action? SearchCompleted;
 
+
+        private string _query = string.Empty;
         public string Query
         {
             get => _query;
@@ -69,6 +69,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
 
         //private bool _isImportingFolder;
         private bool _syncRunning = false;
+        private bool _autoSyncStarted = false;
 
 
         public MainViewModel()
@@ -175,25 +176,67 @@ namespace SmartMemeSearch.Wpf.ViewModels
             }
         }*/
 
+        public void StartAutoSyncLoop()
+        {
+            if (_autoSyncStarted)
+                return;
+
+            _autoSyncStarted = true;
+            _ = Task.Run(async () =>
+                {
+                    await RunExclusiveAutoSyncFromVM(); // first sync
+
+                    while (true)
+                    {
+                        await Task.Delay(TimeSpan.FromMinutes(5));
+                        await RunExclusiveAutoSyncFromVM();
+                    }
+                });
+        }
+
         private async Task RunExclusiveAutoSyncFromVM()
         {
             if (!TryBeginSync())
                 return;
 
+            // Use the UI thread dispatcher stored in the Page field
+            _dispatcher.Invoke(() =>
+            {
+                IsImporting = true;
+                CurrentFile = "Checking folders...";
+                ProgressValue = 0;
+            });
+
             try
             {
                 await AutoSyncAllAsync();
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("AUTO SYNC ERROR: " + ex);
+            }
             finally
             {
-                _dispatcher.Invoke(() =>
-                {
-                    CurrentFile = "Done";
-                    IsImporting = false;
-                    ProgressValue = 1.0;
-                });
+                 _dispatcher.Invoke(() =>
+                 {
+                     CurrentFile = "Done";
+                     IsImporting = false;
+                     ProgressValue = 1.0;
+                     if (!string.IsNullOrWhiteSpace(Query))
+                         Search();
+                 });
                 EndSync();
             }
+        }
+
+        public bool HasAnyFolders()
+        {
+            return _db.GetFolders().Any();
+        }
+
+        public async Task ExecuteManageFoldersAsync()
+        {
+            ManageFolders();
         }
 
         public void ManageFolders()
@@ -275,7 +318,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
                 });
 
                 // Use the existing helper
-               await RunExclusiveAutoSyncFromVM();
+                await RunExclusiveAutoSyncFromVM();
             });
         }
 

@@ -136,7 +136,7 @@
                 Width="140"
                 HorizontalAlignment="Left"
                 Click="Add_Click"
-                Margin="0,0,0,20"/>
+                Margin="4,0,0,20"/>
 
         <!-- OK / Cancel -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
