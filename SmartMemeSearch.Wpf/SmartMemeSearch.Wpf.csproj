@@ -31,8 +31,7 @@
 	</ItemGroup>
 
 	<Target Name="CopyNativeDll" AfterTargets="Build">
-		<Copy SourceFiles="..\x64\$(Configuration)\OcrNative.dll"
-			  DestinationFolder="$(OutputPath)" />
+		<Copy SourceFiles="..\x64\$(Configuration)\OcrNative.dll" DestinationFolder="$(OutputPath)" />
 	</Target>
 
 
