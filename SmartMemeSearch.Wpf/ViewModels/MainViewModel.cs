@@ -291,8 +291,6 @@ namespace SmartMemeSearch.Wpf.ViewModels
                     CurrentFile = "Done";
                     IsImporting = false;
                     ProgressValue = 1.0;
-                    if (!string.IsNullOrWhiteSpace(Query))
-                        Search(searchCenclationSource.Token);
                 });
                 EndSync();
             }
