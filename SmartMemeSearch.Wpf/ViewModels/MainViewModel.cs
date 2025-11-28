@@ -302,14 +302,6 @@ namespace SmartMemeSearch.Wpf.ViewModels
 
                 tr.Commit();
 
-                // -------------------------------
-                // Start background sync (exclusive)
-                // -------------------------------
-                if (!CheckSync())
-                {
-                    _dispatcher.Invoke(() => IsImporting = false);
-                    return;
-                }
 
                 // Use the existing helper
                 await RunExclusiveAutoSyncFromVM();

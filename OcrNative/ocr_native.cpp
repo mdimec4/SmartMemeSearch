@@ -27,7 +27,7 @@ int __stdcall OcrExtractText(const std::uint8_t* data, int length, wchar_t** out
     try
     {
         // Ensure WinRT apartment is initialized for this thread
-        init_apartment();
+        winrt::init_apartment();
 
         // Wrap raw bytes into an in-memory stream
         InMemoryRandomAccessStream stream;
