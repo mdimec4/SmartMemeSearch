@@ -33,6 +33,16 @@ namespace SmartMemeSearch.Wpf
         public MainWindow()
         {
             InitializeComponent();
+
+            // Ensure window fits on screen at startup
+            var screen = System.Windows.SystemParameters.WorkArea;
+
+            if (Width > screen.Width)
+                Width = screen.Width * 0.9;
+
+            if (Height > screen.Height)
+                Height = screen.Height * 0.9;
+
             Loaded += Page_Loaded;
         }
 
