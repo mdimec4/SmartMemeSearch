@@ -75,7 +75,6 @@ namespace SmartMemeSearch.Wpf.Services
                     continue;
 
                 await _importer.ImportSingleAsync(img);
-                // await ThumbnailCache.PreGenerateAsync(img); // Too slow
             }
 
             onFile("Done");

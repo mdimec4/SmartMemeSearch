@@ -22,58 +22,7 @@ namespace SmartMemeSearch.Wpf.Services
             _ocr = ocr;
             _db = db;
         }
-
-        public async Task ImportFolderAsync(
-            string folder,
-            Action<string> onFile,
-            Action<double> onProgress)
-        {
-            if (!Directory.Exists(folder))
-            {
-                onProgress?.Invoke(1.0);
-                return;
-            }
-
-            var dbFiles = _db.GetAllEmbeddings()
-                             .ToDictionary(e => e.FilePath, e => e.LastModified);
-
-            _db.AddFolder(folder);
-
-            string[] files = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
-            var images = files.Where(IsImage).ToArray();
-
-            int total = images.Length;
-            int index = 0;
-
-            foreach (var file in images)
-            {
-                onFile?.Invoke(file);
-                onProgress?.Invoke((double)index / total);
-                index++;
-
-                long lastWrite = File.GetLastWriteTimeUtc(file).Ticks;
-
-                // skip unchanged images
-                if (dbFiles.TryGetValue(file, out long oldStamp) && oldStamp == lastWrite)
-                    continue;
-
-                await _importLock.WaitAsync();
-                try
-                {
-                    await ImportSingleAsync(file);
-                    await ThumbnailCache.PreGenerateAsync(file);
-                }
-                finally
-                {
-                    _importLock.Release();
-                }
-
-                await Task.Delay(5);
-            }
-
-            onProgress?.Invoke(1.0);
-        }
-
+       
         public async Task ImportSingleAsync(string file)
         {
             if (!IsImage(file))
