@@ -235,7 +235,7 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Margin="4"
-                        Height="200"
+                        Height="210"
                         Background="{StaticResource Win11Card}"
                         BorderBrush="{StaticResource Win11Border}"
                         BorderThickness="1"
@@ -249,18 +249,19 @@
                             </Border.ContextMenu>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="202"/>
+                                    <ColumnDefinition Width="210"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                        
+
                                 <!-- Thumbnail -->
                                 <Image Source="{Binding Thumbnail}"
                                        Width="200"
                                        Height="200"
+                                       Margin="5"
                                        Grid.Row="0"
                                        Grid.Column="0"
                                        Stretch="UniformToFill"/>
@@ -294,7 +295,7 @@
                                             </Border>
                                         </TextBlock.ToolTip>
 
-</TextBlock>
+                                     </TextBlock>
                                     <!-- prevents overflow -->
 
                                 </StackPanel>
