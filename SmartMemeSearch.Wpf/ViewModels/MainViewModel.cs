@@ -16,6 +16,8 @@ namespace SmartMemeSearch.Wpf.ViewModels
         public ObservableCollection<SearchResult> Results { get; } = new();
         public event Action? SearchCompleted;
 
+        private static readonly SemaphoreSlim _searchLock = new SemaphoreSlim(1, 1);
+
 
         private string _query = string.Empty;
         public string Query
@@ -72,6 +74,8 @@ namespace SmartMemeSearch.Wpf.ViewModels
         private bool _autoSyncStarted = false;
 
 
+        private CancellationTokenSource searchCenclationSource = new CancellationTokenSource();
+       
         public MainViewModel()
         {
             _clip = new ClipService();
@@ -83,39 +87,104 @@ namespace SmartMemeSearch.Wpf.ViewModels
 
             _debounceTimer = new DispatcherTimer();
             _debounceTimer.Interval = TimeSpan.FromMilliseconds(DebounceDelayMs);
+
             _debounceTimer.Tick += (s, e) =>
             {
                 _debounceTimer.Stop();
-                Search();
+                if (searchCenclationSource.Token.CanBeCanceled)
+                {
+                    searchCenclationSource.Cancel();
+                    searchCenclationSource = new CancellationTokenSource();
+                }
+                Search(searchCenclationSource.Token);
             };
 
             ThumbnailCache.Initialize(_dispatcher);
         }
 
-        public void Search()
+        public void Search(CancellationToken token)
         {
+            if (token.IsCancellationRequested)
+                return;
             var results = _search.Search(Query);
+            if (token.IsCancellationRequested)
+                return;
+            //Limit the number of relavant results
+            //results = results.Take(500).ToList();
 
-            // Clear collection on UI thread
-            _dispatcher.Invoke(() => Results.Clear());
 
-            foreach (var r in results)
+            if (token.IsCancellationRequested)
+                return;
+            _ = Task.Run(async () =>
             {
-                // Add items on UI thread
-                _dispatcher.Invoke(() =>
+                if (token.IsCancellationRequested)
+                    return;
+
+                _searchLock.Wait();
+                try
                 {
-                    Results.Add(r);
-                });
+                    if (token.IsCancellationRequested)
+                        return;
+                    // Clear collection on UI thread
+                    _dispatcher.Invoke(() => Results.Clear());
 
-                var thumb = ThumbnailCache.TryGetMemory(r.FilePath);
-                if (thumb != null)
-                    r.Thumbnail = thumb;
-                else
-                    _ = LoadThumbnailAsync(r);
-            }
+                    List<Task> thumbnailTasksToWait = new List<Task>(Environment.ProcessorCount);
 
-            // 🔥 Fire event after results are added
-            SearchCompleted?.Invoke();
+                    foreach (var r in results)
+                    {
+                        if (token.IsCancellationRequested)
+                            return;
+                        // Add items on UI thread
+                        _dispatcher.Invoke(() =>
+                        {
+                            Results.Add(r);
+                        });
+
+                        if (token.IsCancellationRequested)
+                            return;
+
+                        var thumb = ThumbnailCache.TryGetMemory(r.FilePath);
+                        if (thumb != null)
+                        {
+                            _dispatcher.Invoke(() =>
+                            {
+                                r.Thumbnail = thumb;
+                            });
+                        }
+                        else
+                        {
+                            if (token.IsCancellationRequested)
+                                return;
+
+                            thumbnailTasksToWait.Add(LoadThumbnailAsync(r));
+                            if (thumbnailTasksToWait.Count >= Environment.ProcessorCount)
+                            {
+                                foreach (Task t in thumbnailTasksToWait)
+                                {
+                                    if (token.IsCancellationRequested)
+                                        return;
+                                    await t;
+                                }
+                                thumbnailTasksToWait.Clear();
+                            }
+
+                            if (token.IsCancellationRequested)
+                                return;
+                        }
+                    }
+                    if (token.IsCancellationRequested)
+                        return;
+                    _dispatcher.Invoke(() =>
+                    {
+                        // 🔥 Fire event after results are added
+                        SearchCompleted?.Invoke();
+                    });
+                }
+                finally
+                {
+                    _searchLock.Release();
+                }
+            });
         }
 
         /*
@@ -217,14 +286,14 @@ namespace SmartMemeSearch.Wpf.ViewModels
             }
             finally
             {
-                 _dispatcher.Invoke(() =>
-                 {
-                     CurrentFile = "Done";
-                     IsImporting = false;
-                     ProgressValue = 1.0;
-                     if (!string.IsNullOrWhiteSpace(Query))
-                         Search();
-                 });
+                _dispatcher.Invoke(() =>
+                {
+                    CurrentFile = "Done";
+                    IsImporting = false;
+                    ProgressValue = 1.0;
+                    if (!string.IsNullOrWhiteSpace(Query))
+                        Search(searchCenclationSource.Token);
+                });
                 EndSync();
             }
         }
