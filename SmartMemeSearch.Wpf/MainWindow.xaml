@@ -19,7 +19,6 @@
         <SolidColorBrush x:Key="Win11ButtonHover" Color="#DDDDDD"/>
         <SolidColorBrush x:Key="Win11Text" Color="#202020"/>
 
-
         <!-- Modern default font (Segoe UI Variable) -->
         <Style TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI Variable"/>
@@ -140,7 +139,6 @@
             </Setter>
         </Style>
 
-
         <DropShadowEffect x:Key="TileShadow"
                   Color="#22000000"
                   ShadowDepth="2"
@@ -173,12 +171,21 @@
     <DockPanel>
         <!-- Search bar -->
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8">
+            <Label Content="Search memes:"/>
             <TextBox x:Name="SearchBox"
                      Width="400"
                      Margin="0,0,8,0"
                      VerticalAlignment="Center"
                      Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
-                     PreviewKeyDown="SearchBox_KeyDown"/>
+                     PreviewKeyDown="SearchBox_KeyDown">
+                <TextBox.ToolTip>
+                    <Border Padding="8" MaxWidth="500">
+                        <TextBlock Text="Search memes (or any other images) by it's content."
+                            TextWrapping="NoWrap"/>
+                    </Border>
+                </TextBox.ToolTip>
+            </TextBox>
+
             <Button Content="Manage Meme Folders"
                     Width="130"
                     Margin="8,0,8,0"
