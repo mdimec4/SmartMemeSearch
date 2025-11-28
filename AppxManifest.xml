@@ -30,8 +30,9 @@
       Executable="SmartMemeSearch.Wpf.exe"
       EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="SmartMemeSearch.Package"
-        Description="SmartMemeSearch.Package"
+        DisplayName="SmartMemeSearch"
+        Description="Smart Meme Search helps you instantly find memes stored on your computer using AI image recognition and OCR text detection.
+Just type what you’re looking for — the app scans your folders, reads text inside images, and shows the best matches instantly."
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.scale-200.png"
         Square44x44Logo="Assets\Square44x44Logo.scale-200.png">
