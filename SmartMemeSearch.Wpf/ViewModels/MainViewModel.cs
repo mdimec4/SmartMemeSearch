@@ -317,12 +317,6 @@ namespace SmartMemeSearch.Wpf.ViewModels
             return true;
         }
 
-        public bool CheckSync()
-        {
-            if (_syncRunning) return false;
-            return true;
-        }
-
         public void EndSync()
         {
             _syncRunning = false;
