@@ -18,9 +18,7 @@
 		<DefineConstants>$(DefineConstants);MS_STORE_FREE_WITH_ADDS</DefineConstants>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<DefineConstants>$(DefineConstants);MS_STORE_FREE_WITH_ADDS</DefineConstants>
-	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'" />
 
 	<!-- NuGet packages -->
 	<ItemGroup>
@@ -45,10 +43,7 @@
 
 	<Target Name="CopyNativeToRuntimeFolder" AfterTargets="Build">
 		<MakeDir Directories="$(OutputPath)runtimes\win-x64\native" />
-		<Copy
-			SourceFiles="..\x64\$(Configuration)\OcrNative.dll"
-			DestinationFiles="$(OutputPath)runtimes\win-x64\native\OcrNative.dll"
-			SkipUnchangedFiles="true" />
+		<Copy SourceFiles="..\x64\$(Configuration)\OcrNative.dll" DestinationFiles="$(OutputPath)runtimes\win-x64\native\OcrNative.dll" SkipUnchangedFiles="true" />
 	</Target>
 
 	<!-- Add DLL into MSIX under runtimes/win-x64/native -->
