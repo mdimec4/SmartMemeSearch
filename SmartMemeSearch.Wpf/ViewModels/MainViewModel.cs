@@ -75,7 +75,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
 
 
         private CancellationTokenSource searchCenclationSource = new CancellationTokenSource();
-       
+
         public MainViewModel()
         {
             _clip = new ClipService();
@@ -128,7 +128,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
                     // Clear collection on UI thread
                     _dispatcher.Invoke(() => Results.Clear());
 
-                    List<Task> thumbnailTasksToWait = new List<Task>(Environment.ProcessorCount);
+
 
                     foreach (var r in results)
                     {
@@ -151,34 +151,43 @@ namespace SmartMemeSearch.Wpf.ViewModels
                                 r.Thumbnail = thumb;
                             });
                         }
-                        else
-                        {
-                            if (token.IsCancellationRequested)
-                                return;
-
-                            thumbnailTasksToWait.Add(LoadThumbnailAsync(r));
-                            if (thumbnailTasksToWait.Count >= Environment.ProcessorCount)
-                            {
-                                foreach (Task t in thumbnailTasksToWait)
-                                {
-                                    if (token.IsCancellationRequested)
-                                        return;
-                                    await t;
-                                }
-                                thumbnailTasksToWait.Clear();
-                            }
-
-                            if (token.IsCancellationRequested)
-                                return;
-                        }
                     }
+
                     if (token.IsCancellationRequested)
                         return;
+
                     _dispatcher.Invoke(() =>
                     {
                         // 🔥 Fire event after results are added
                         SearchCompleted?.Invoke();
                     });
+
+                    if (token.IsCancellationRequested)
+                        return;
+
+                    // create/load thumbnail files if they don't exist already exsist in memory cache
+                    List<Task> thumbnailTasksToWait = new List<Task>(Environment.ProcessorCount);
+                    foreach (var r in results)
+                    {
+                        if (token.IsCancellationRequested)
+                            return;
+                        if (r.Thumbnail != null)
+                            continue;
+                        if (token.IsCancellationRequested)
+                            return;
+
+                        thumbnailTasksToWait.Add(LoadThumbnailAsync(r));
+                        if (thumbnailTasksToWait.Count >= Environment.ProcessorCount)
+                        {
+                            foreach (Task t in thumbnailTasksToWait)
+                            {
+                                if (token.IsCancellationRequested)
+                                    return;
+                                await t;
+                            }
+                            thumbnailTasksToWait.Clear();
+                        }
+                    }
                 }
                 finally
                 {
