@@ -96,104 +96,97 @@ namespace SmartMemeSearch.Wpf.ViewModels
                     searchCenclationSource.Cancel();
                     searchCenclationSource = new CancellationTokenSource();
                 }
-                Search(searchCenclationSource.Token);
+                _ = Task.Run(() => Search(searchCenclationSource.Token));
             };
 
             ThumbnailCache.Initialize(_dispatcher);
         }
 
-        public void Search(CancellationToken token)
+        public async Task Search(CancellationToken token)
         {
             if (token.IsCancellationRequested)
                 return;
-            var results = _search.Search(Query);
-            if (token.IsCancellationRequested)
-                return;
-            //Limit the number of relavant results
-            //results = results.Take(500).ToList();
 
-
-            if (token.IsCancellationRequested)
-                return;
-            _ = Task.Run(async () =>
+            _searchLock.Wait();
+            try
             {
                 if (token.IsCancellationRequested)
                     return;
+                var results = _search.Search(Query);
+                if (token.IsCancellationRequested)
+                    return;
+                //Limit the number of relavant results
+                //results = results.Take(500).ToList();
 
-                _searchLock.Wait();
-                try
+
+                if (token.IsCancellationRequested)
+                    return;
+                // Clear collection on UI thread
+                _dispatcher.Invoke(() => Results.Clear());
+
+                foreach (var r in results)
                 {
                     if (token.IsCancellationRequested)
                         return;
-                    // Clear collection on UI thread
-                    _dispatcher.Invoke(() => Results.Clear());
-
-
-
-                    foreach (var r in results)
-                    {
-                        if (token.IsCancellationRequested)
-                            return;
-                        // Add items on UI thread
-                        _dispatcher.Invoke(() =>
-                        {
-                            Results.Add(r);
-                        });
-
-                        if (token.IsCancellationRequested)
-                            return;
-
-                        var thumb = ThumbnailCache.TryGetMemory(r.FilePath);
-                        if (thumb != null)
-                        {
-                            _dispatcher.Invoke(() =>
-                            {
-                                r.Thumbnail = thumb;
-                            });
-                        }
-                    }
-
-                    if (token.IsCancellationRequested)
-                        return;
-
+                    // Add items on UI thread
                     _dispatcher.Invoke(() =>
                     {
-                        // 🔥 Fire event after results are added
-                        SearchCompleted?.Invoke();
+                        Results.Add(r);
                     });
 
                     if (token.IsCancellationRequested)
                         return;
 
-                    // create/load thumbnail files if they don't exist already in memory cache
-                    List<Task> thumbnailTasksToWait = new List<Task>(Environment.ProcessorCount);
-                    foreach (var r in results)
+                    var thumb = ThumbnailCache.TryGetMemory(r.FilePath);
+                    if (thumb != null)
                     {
-                        if (token.IsCancellationRequested)
-                            return;
-                        if (r.Thumbnail != null)
-                            continue;
-                        if (token.IsCancellationRequested)
-                            return;
-
-                        thumbnailTasksToWait.Add(LoadThumbnailAsync(r));
-                        if (thumbnailTasksToWait.Count >= Environment.ProcessorCount)
+                        _dispatcher.Invoke(() =>
                         {
-                            foreach (Task t in thumbnailTasksToWait)
-                            {
-                                if (token.IsCancellationRequested)
-                                    return;
-                                await t;
-                            }
-                            thumbnailTasksToWait.Clear();
-                        }
+                            r.Thumbnail = thumb;
+                        });
                     }
                 }
-                finally
+
+                if (token.IsCancellationRequested)
+                    return;
+
+                _dispatcher.Invoke(() =>
                 {
-                    _searchLock.Release();
+                    // 🔥 Fire event after results are added
+                    SearchCompleted?.Invoke();
+                });
+
+                if (token.IsCancellationRequested)
+                    return;
+
+                // create/load thumbnail files if they don't exist already in memory cache
+                List<Task> thumbnailTasksToWait = new List<Task>(Environment.ProcessorCount);
+                foreach (var r in results)
+                {
+                    if (token.IsCancellationRequested)
+                        return;
+                    if (r.Thumbnail != null)
+                        continue;
+                    if (token.IsCancellationRequested)
+                        return;
+
+                    thumbnailTasksToWait.Add(LoadThumbnailAsync(r));
+                    if (thumbnailTasksToWait.Count >= Environment.ProcessorCount)
+                    {
+                        foreach (Task t in thumbnailTasksToWait)
+                        {
+                            if (token.IsCancellationRequested)
+                                return;
+                            await t;
+                        }
+                        thumbnailTasksToWait.Clear();
+                    }
                 }
-            });
+            }
+            finally
+            {
+                _searchLock.Release();
+            }
         }
 
         /*
