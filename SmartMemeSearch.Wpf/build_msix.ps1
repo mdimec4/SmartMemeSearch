@@ -1,3 +1,5 @@
+# To run: powershell -ExecutionPolicy Bypass -File .\build_msix.ps1
+
 # ===============================
 #   CONFIGURATION
 # ===============================
