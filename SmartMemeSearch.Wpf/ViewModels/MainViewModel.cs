@@ -165,7 +165,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
                     if (token.IsCancellationRequested)
                         return;
 
-                    // create/load thumbnail files if they don't exist already exsist in memory cache
+                    // create/load thumbnail files if they don't exist already in memory cache
                     List<Task> thumbnailTasksToWait = new List<Task>(Environment.ProcessorCount);
                     foreach (var r in results)
                     {
