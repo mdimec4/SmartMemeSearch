@@ -10,7 +10,7 @@ namespace SmartMemeSearch.Wpf.ViewModels
     {
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
         private readonly DispatcherTimer _debounceTimer;
-        private const int DebounceDelayMs = 200;
+        private const int DebounceDelayMs = 500;
 
 
         public ObservableCollection<SearchResult> Results { get; } = new();
